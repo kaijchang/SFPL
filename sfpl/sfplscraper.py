@@ -3,6 +3,11 @@ from robobrowser import RoboBrowser
 
 class SFPL:
     def __init__(self, barcode, pin):
+        """The SFPL scraper object
+        Args:
+            barcode (str): The library card barcode
+            pin (str): PIN/ password for library account
+        """
         self.browser = RoboBrowser(parser='html5lib')
         self.browser.open('https://sfpl.bibliocommons.com/user/login')
         form = self.browser.get_form(class_='loginForm left')
@@ -10,7 +15,7 @@ class SFPL:
         form['user_pin'] = pin
         self.browser.submit_form(form)
 
-    def getCheckedOut(self):
+    def getCheckouts(self):
         self.browser.open(
             'https://sfpl.bibliocommons.com/checkedout/index/out')
         books = self.browser.parsed.find_all(
@@ -37,6 +42,10 @@ class SFPL:
         return book_data
 
     def getHolds(self):
+        """Get's the user's items on hold
+        Returns:
+            A list containing dictionaries with basic information on the book and hold status
+        """
         self.browser.open('https://sfpl.bibliocommons.com/holds')
         books = self.browser.parsed.find_all('div', {'class': [
                                              'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white']})
@@ -60,6 +69,58 @@ class SFPL:
             else:
                 this_book_data['status'] = book.find(
                     class_='hold_position').text.strip()
+
+            if book.find(class_='subTitle'):
+                this_book_data['subtitle'] = book.find(class_='subTitle').text
+
+            else:
+                this_book_data['subtitle'] = None
+
+            book_data.append(this_book_data)
+
+        return book_data
+
+    def getForLater(self):
+        """Get's user's for later shelf
+        Returns:
+            A list containing dictionaries with basic information on each book
+        """
+        self.browser.open(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/for_later')
+        return self.parseShelf()
+
+    def getInProgress(self):
+        """Get's user's in progress shelf
+        Returns:
+            A list containing dictionaries with basic information on each book
+        """
+        self.browser.open(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress')
+        return self.parseShelf()
+
+    def getCompleted(self):
+        """Get's user's completed shelf
+        Returns:
+            A list containing dictionaries with basic information on each book
+        """
+        self.browser.open(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/completed')
+        return self.parseShelf()
+
+    def parseShelf(self):
+        "Internal function to reduce duplicate code"
+        books = self.browser.parsed.find_all(
+            'div', lambda value: value and value.startswith('listItem clearfix'))
+
+        book_data = []
+
+        for book in books:
+            this_book_data = {
+                'title': book.find(testid='bib_link').text,
+                'author': book.find(testid='author_search').text,
+                'medium': book.find(class_='format').find('strong').text,
+                'publication year': int(book.find(class_='format').text.split('\n')[3].strip().replace('-', ''))
+            }
 
             if book.find(class_='subTitle'):
                 this_book_data['subtitle'] = book.find(class_='subTitle').text
