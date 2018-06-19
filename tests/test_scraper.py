@@ -16,20 +16,20 @@ class TestScraper(unittest.TestCase):
                 BeautifulSoup(file.read(), 'html.parser'))
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['title'], 'Make your Own Neural Network')
-        self.assertEqual(result[0]['author'], 'Rashid, Tariq')
+        self.assertEqual(result[0]['title'], 'Fundamentals of Deep Learning')
+        self.assertEqual(result[0]['author'], 'Buduma, Nikhil')
         self.assertEqual(result[0]['medium'], 'Book')
-        self.assertEqual(result[0]['publication year'], 2016)
-        self.assertEqual(result[0]['status'], '#3 on 2 copies')
+        self.assertEqual(result[0]['publication year'], 2017)
+        self.assertEqual(result[0]['status'], 'Pickup by:  Jun 18, 2018')
         self.assertEqual(
-            result[0]['subtitle'], 'A Gentle Journey Through the Mathematics of Neural Networks, and Making your Own Using the Python Computer Language')
+            result[0]['subtitle'], 'Designing Next-generation Machine Intelligence Algorithms')
 
     def test_checkouts(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/checkouts.html'), encoding='utf-8') as file:
             result = self.SFPL.parseCheckouts(
                 BeautifulSoup(file.read(), 'html.parser'))
 
-        self.assertEqual(len(result), 6)
+        self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['title'], 'Basics of Web Design')
         self.assertEqual(result[0]['author'], 'Felke-Morris, Terry')
         self.assertEqual(result[0]['medium'], 'Book')
@@ -42,7 +42,7 @@ class TestScraper(unittest.TestCase):
             result = self.SFPL.parseShelf(
                 BeautifulSoup(file.read(), 'html.parser'))
 
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['title'], 'Bitcoin')
         self.assertEqual(result[0]['author'], 'United States')
         self.assertEqual(result[0]['medium'], 'Website or Online Data')

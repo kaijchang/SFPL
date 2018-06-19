@@ -112,7 +112,7 @@ class SFPL:
 
     def parseHolds(self, response):
         books = response.find_all('div', {'class': [
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white']})
+            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']})
 
         book_data = []
 
@@ -129,6 +129,10 @@ class SFPL:
                 location.span.clear()
                 this_book_data['status'] = 'In Transit to {}'.format(
                     location.text.strip())
+
+            elif book.find(class_='pick_up_date'):
+                this_book_data['status'] = book.find(
+                    class_='pick_up_date').text.strip()
 
             else:
                 this_book_data['status'] = book.find(
