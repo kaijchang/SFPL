@@ -1,14 +1,16 @@
 # SFPL Scraper
-Python Package for Scraping SFPL Website
+![travis](https://travis-ci.org/kajchang/sfpl-scraper.svg?branch=master)
+![pypi](https://badge.fury.io/py/sfpl.svg)
 
-#Usage
+Python Package for accessing data on the SFPL Website in a Python program.
 
-```pip install sfpl```
+# Usage
 
-```
-from sfpl import SFPL
-sfpl = SFPL('barcode', 'pin')
-```
+```pip install sfpl``` or clone / download this repository and ```python setup.py install```.
+
+```from sfpl import SFPL```
+
+```sfpl = SFPL('barcode', 'pin')```
 
 The current methods are ```getHolds()```, ```getCheckouts()```, ```getForLater()```, ```getInProgress()``` and ```getCompleted()```.
 
