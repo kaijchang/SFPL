@@ -20,7 +20,7 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 ```getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
 
-```getForLater()```, ```getInProgress()``` and ```getCompleted()``` methods return a list containing Book objects for each book in the respective shelf.
+```getForLater()```, ```getInProgress()``` and ```getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
 
 ### Example
 
@@ -39,9 +39,7 @@ Returned by other classes.
 
 ```author``` - Author of the book as a Author object.
 
-```medium``` - Medium of the resource. (Audiobook, Book, Website)
-
-```publication_year``` - The year the book was published.
+```version``` - Dictionary mapping mediums to their publication years.
 
 ```subtitle``` - The book's subtitle.
 
@@ -56,10 +54,8 @@ Returned by other classes.
 >>> book = checkedOutBooks[0] # Get the first book in the list
 >>> book.title
 'Basics of Web Design'
->>> book.medium
-'Book'
->>> book.publication_year
-2012
+>>> book.version
+{'Book': 2012}
 >>> book.subtitle
 'HTML5 & CSS3'
 >>> book.status
@@ -114,5 +110,3 @@ Events
 Searches
 
 Better Status Messages
-
-Tests for Author

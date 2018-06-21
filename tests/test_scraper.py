@@ -18,8 +18,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Fundamentals of Deep Learning')
         self.assertEqual(result[0].author.name, 'Buduma, Nikhil')
-        self.assertEqual(result[0].medium, 'Book')
-        self.assertEqual(result[0].publication_year, 2017)
+        self.assertEqual(result[0].version, {'Book': 2017})
         self.assertEqual(result[0].status, 'Pickup by:  Jun 18, 2018')
         self.assertEqual(
             result[0].subtitle, 'Designing Next-generation Machine Intelligence Algorithms')
@@ -32,8 +31,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Basics of Web Design')
         self.assertEqual(result[0].author.name, 'Felke-Morris, Terry')
-        self.assertEqual(result[0].medium, 'Book')
-        self.assertEqual(result[0].publication_year, 2012)
+        self.assertEqual(result[0].version, {'Book': 2012})
         self.assertEqual(result[0].status, 'Due Jun 28, 2018')
         self.assertEqual(result[0].subtitle, 'HTML5 & CSS3')
 
@@ -45,8 +43,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Bitcoin')
         self.assertEqual(result[0].author.name, 'United States')
-        self.assertEqual(result[0].medium, 'Website or Online Data')
-        self.assertEqual(result[0].publication_year, 2014)
+        self.assertEqual(result[0].version, {'Website or Online Data': 2014})
         self.assertEqual(
             result[0].subtitle, 'Examining the Benefits and Risks for Small Business : Hearing Before the Committee on Small Business, United States House of Representatives, One Hundred Thirteenth Congress, Second Session, Hearing Held April 2, 2014')
 
@@ -58,6 +55,5 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(
             result[0].title, "Harry Potter and the Sorcerer's Stone")
         self.assertEqual(result[0].author.name, 'Rowling, J. K.')
-        self.assertEqual(set(result[0].medium), set([
-                         'Audiobook CD', 'eBook', 'Book', 'Downloadable Audiobook', 'Large Print']))
-        self.assertEqual(result[0].publication_year, 1997)
+        self.assertEqual(result[0].version, {'Book': 1997, 'Large Print': 1999,
+                                             'Audiobook CD': 1999, 'Downloadable Audiobook': 2012, 'eBook': 2012})

@@ -64,12 +64,12 @@ class SFPL:
         return self.parseShelf(self.browser.parsed)
 
     def parseShelf(self, response):
-        return [Book(book.find(testid='bib_link').text, book.find(testid='author_search').text, book.find(class_='format').find('strong').text, int(
-                book.find(class_='format').text.split('\n')[2].strip().replace('-', '')), book.find(class_='subTitle').text if book.find(class_='subTitle') else None) for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
+        return [Book(book.find(testid='bib_link').text, book.find(testid='author_search').text, {book.find(class_='format').find('strong').text: int(
+                book.find(class_='format').text.split('\n')[2].strip().replace('-', ''))}, book.find(class_='subTitle').text if book.find(class_='subTitle') else None) for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     def parseCheckouts(self, response):
-        return [Book(book.find(class_='title title_extended').text, book.find(testid='author_search').text, book.find(class_='format').text.split('\n')[1].strip(), int(book.find(class_='format').text.split(
-                '\n')[2].strip().replace('-', '')), book.find(class_='subTitle').text if book.find(class_='subTitle') else None, 'Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', ''))) for book in response.find_all(
+        return [Book(book.find(class_='title title_extended').text, book.find(testid='author_search').text, {book.find(class_='format').text.split('\n')[1].strip(): int(book.find(class_='format').text.split(
+                '\n')[2].strip().replace('-', ''))}, book.find(class_='subTitle').text if book.find(class_='subTitle') else None, 'Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', ''))) for book in response.find_all(
                     'div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
 
     def parseHolds(self, response):
@@ -93,18 +93,17 @@ class SFPL:
                 status = book.find(
                     class_='hold_position').text.strip()
 
-            book_data.append(Book(book.find(testid='bib_link').text, book.find(testid='author_search').text, book.find(class_='format').text.split('\n')[1].strip(), int(
-                book.find(class_='format').text.split('\n')[2].strip().replace('-', '')), book.find(class_='subTitle').text if book.find(class_='subTitle') else None, status))
+            book_data.append(Book(book.find(testid='bib_link').text, book.find(testid='author_search').text, {book.find(class_='format').text.split('\n')[1].strip(): int(
+                book.find(class_='format').text.split('\n')[2].strip().replace('-', ''))}, book.find(class_='subTitle').text if book.find(class_='subTitle') else None, status))
 
         return book_data
 
 
 class Book:
-    def __init__(self, title, author, medium, publication_year, subtitle, status=None):
+    def __init__(self, title, author, version, subtitle, status=None):
         self.title = title
         self.author = Author(author)
-        self.medium = medium
-        self.publication_year = publication_year
+        self.version = version
         self.subtitle = subtitle
         self.status = status
 
@@ -114,6 +113,9 @@ class Author:
         self.name = name
 
     def getBooks(self):
-        return [Book(book.find('span').text, book.find('a', class_='author-link').text, list(set([b.text.replace('\xa0', '') for b in book.find_all('span', class_='cp-format-indicator')])),
-                     min(v for v in [int(b.text.strip().replace('-', '')) if book.find('span', class_='cp-publication-date') else None for b in book.find_all('span', class_='cp-publication-date')] if v is not None), book.find('span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None) for book in BeautifulSoup(requests.get(
-                         'https://sfpl.bibliocommons.com/v2/search?query=%22{}%22&searchType=author'.format('+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]
+        """Get's the first page of book written by the author.
+        Returns:
+            A list of 5 Book objects.
+        """
+        return [Book(book.find('span').text, book.find('a', class_='author-link').text, {k: v for (k, v) in zip([b.text.replace('\xa0', '') for version in book.find_all(class_='format-info-main-content') for b in version.find_all('span', class_='cp-format-indicator')], [int(b.text.strip().replace('-', '')) if version.find('span', class_='cp-publication-date') else None for version in book.find_all(class_='format-info-main-content') for b in version.find_all('span', class_='cp-publication-date')])}, book.find('span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None) for book in BeautifulSoup(requests.get(
+            'https://sfpl.bibliocommons.com/v2/search?query=%22{}%22&searchType=author'.format('+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]
