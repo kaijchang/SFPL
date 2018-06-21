@@ -8,54 +8,111 @@ Python Package for accessing data on the SFPL Website in a Python program.
 
 ```pip install sfpl``` or clone / download this repository and ```python setup.py install```.
 
-```from sfpl import SFPL```
+The package has 3 classes: SFPL, Book and Author.
 
-```sfpl = SFPL('barcode', 'pin')```
+The SFPL class is allows you to access SFPL account and all its holds, checkouts, and shelves
+
+## SFPL Class
+
+### Methods
 
 The current methods are ```getHolds()```, ```getCheckouts()```, ```getForLater()```, ```getInProgress()``` and ```getCompleted()```.
 
-```getCheckouts()``` returns a list of dictionaries with basic information on books the user has checked out, along with a due date:
+The ```getHolds()``` method returns a Book object for each book in your holds.
+The ```getCheckouts()``` method returns a Book object for each book you've checked out.
+The ```getForLater()```, ```getInProgress()``` and ```getCompleted()``` methods return Book objects for each book in the respective shelf.
+
+### Example
 
 ```
-[
-    {
-        "title": "Blockchain and the Law",
-        "author": "De Filippi, Primavera",
-        "medium": "Book",
-        "publication year": 2018,
-        "duedate": "Jun 13, 2018",
-        "subtitle": "The Rule of Code"
-    }, ...
+>>> from sfpl import SFPL
+>>> sfpl = SFPL('barcode', 'pin')
 ```
 
-```getHolds()``` returns a list of dictionaries with basic information on books the user has requested, along with the request status:
+## Book Class
+
+Returned by other classes.
+
+### Attributes
+
+```title``` - Title of the book.
+
+```author``` - Author of the book as a Author object.
+
+```medium``` - Medium of the resource. (Audiobook, Book, Website)
+
+```publication_year``` - The year the book was published.
+
+```subtitle``` - The book's subtitle.
+
+```status``` - Status of the book, if applicable. (duedate, hold position, etc.)
+
+### Example
+
 ```
-[
-    {
-        "title": "Fundamentals of Deep Learning",
-        "author": "Buduma, Nikhil",
-        "medium": "Book",
-        "publication year": 2017,
-        "status": "In Transit to WEST PORTAL BRANCH",
-        "subtitle": "Designing Next-generation Machine Intelligence Algorithms"
-    }, ...
+>>> from sfpl import SFPL
+>>> sfpl = SFPL('barcode', 'pin')
+>>> checkedOutBooks = sfpl.getCheckouts() # Get all checked out books
+>>> book = checkedOutBooks[0] # Get the first book in the list
+>>> book.title
+'Basics of Web Design'
+>>> book.medium
+'Book'
+>>> book.publication_year
+2012
+>>> book.subtitle
+'HTML5 & CSS3'
+>>> book.status
+'Due Jun 28, 2018'
 ```
 
-```getForLater()``` returns a list of dictionaries with basic information on the books on your For Later shelf:
+## Author Class
+
+Returned in Book objects from SFPL class methods, or can be created independently.
+
+### Attributes
+
+```name``` - Name of the author
+
+### Methods
+
+```getBooks()``` - Get top 5 books written by the author
+
+TODO:
+Support pagination
+
+### Examples
+
+Returned by SFPL class methods:
+
 ```
-[
-    {
-        "title": "Cryptocurrency",
-        "author": "Goleman, Travis",
-        "medium": "Downloadable Audiobook",
-        "publication year": 2018,
-        "subtitle": "Mining, Investing and Trading in Blockchain for Beginners"
-    }, ...
-]
+>>> from sfpl import SFPL
+>>> sfpl = SFPL('barcode', 'pin')
+>>> checkedOutBooks = sfpl.getCheckouts() # Get all checked out books
+>>> book = checkedOutBooks[0] # Get the first book in the list
+>>> book.author.name
+'Felke-Morris, Terry'
 ```
 
-```getInProgress()```, ```getCompleted()``` are identical as ```getForLater()``` for their respective shelves.
+Created independently:
+
+```
+>>> from sfpl import Author
+>>> author = Author('J.K. Rowling')
+>>> books = author.getBooks() # Get top 5 books written by J.K. Rowling
+>>> book = books[0] # Get the first book in the list
+>>> book.title
+"Harry Potter and the Sorcerer's Stone"
+```
 
 ## TODO:
 
-Calendars, Events, and Searches.
+Calendars
+
+Events
+
+Searches
+
+Better Status Messages
+
+Tests for Author

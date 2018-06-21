@@ -1,1 +1,1 @@
-from .sfplscraper import SFPL
+from .sfplscraper import SFPL, Author
