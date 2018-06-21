@@ -114,6 +114,6 @@ class Author:
         self.name = name
 
     def getBooks(self):
-        return [Book(book.find('span').text, book.find('a', class_='author-link').text, [b.text.replace('\xa0', '') for b in book.find_all('span', class_='cp-format-indicator')],
-                     int(book.find('span', class_='cp-publication-date').text.strip().replace('-', '')) if book.find('span', class_='cp-publication-date') else None, book.find('span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None) for book in BeautifulSoup(requests.get(
+        return [Book(book.find('span').text, book.find('a', class_='author-link').text, list(set([b.text.replace('\xa0', '') for b in book.find_all('span', class_='cp-format-indicator')])),
+                     min(v for v in [int(b.text.strip().replace('-', '')) if book.find('span', class_='cp-publication-date') else None for b in book.find_all('span', class_='cp-publication-date')] if v is not None), book.find('span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None) for book in BeautifulSoup(requests.get(
                          'https://sfpl.bibliocommons.com/v2/search?query=%22{}%22&searchType=author'.format('+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]

@@ -2,7 +2,7 @@
 ![travis](https://travis-ci.org/kajchang/sfpl-scraper.svg?branch=master)
 ![pypi](https://badge.fury.io/py/sfpl.svg)
 
-Python Package for accessing data on the SFPL Website in a Python program.
+Python Package for accessing account, book, and author data from the SFPL Website.
 
 # Usage
 
@@ -10,17 +10,17 @@ Python Package for accessing data on the SFPL Website in a Python program.
 
 The package has 3 classes: SFPL, Book and Author.
 
-The SFPL class is allows you to access SFPL account and all its holds, checkouts, and shelves
-
 ## SFPL Class
+
+The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves.
 
 ### Methods
 
-The current methods are ```getHolds()```, ```getCheckouts()```, ```getForLater()```, ```getInProgress()``` and ```getCompleted()```.
+```getHolds()``` - Returns a list containing Book objects for each book in your holds.
 
-The ```getHolds()``` method returns a Book object for each book in your holds.
-The ```getCheckouts()``` method returns a Book object for each book you've checked out.
-The ```getForLater()```, ```getInProgress()``` and ```getCompleted()``` methods return Book objects for each book in the respective shelf.
+```getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
+
+```getForLater()```, ```getInProgress()``` and ```getCompleted()``` methods return a list containing Book objects for each book in the respective shelf.
 
 ### Example
 

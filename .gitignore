@@ -58,3 +58,5 @@ docs/_build/
 target/
 
 \.DS_Store
+
+\.pytest_cache/v/cache/
