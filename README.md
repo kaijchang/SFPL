@@ -36,15 +36,13 @@ Holding errors
 ```
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
->>> sfpl.getCheckouts()
-[<__main__.Book object at 0x114b284e0>, <__main__.Book object at 0x114b41c88>, <__main__.Book object at 0x114b41d30>, <__main__.Book object at 0x114b41dd8>]
 >>> [book.title for book in sfpl.getCheckouts()]
 ['On Intelligence', 'Money', 'Deep Learning', 'Make your Own Neural Network']
 ```
 
 ## Book Class
 
-Returned by other classes.
+Returned by other classes, or can be created independently.
 
 ### Attributes
 
@@ -52,11 +50,9 @@ Returned by other classes.
 
 ```author``` - Author of the book as a Author object.
 
-```version``` - Dictionary mapping mediums to their publication years.
-
 ```subtitle``` - The book's subtitle.
 
-```id``` - The SFPL's id for the book. (used for holding / looking up details)
+```ID``` - The SFPL's id for the book. (used for holding / looking up details)
 
 ```status``` - Status of the book, if applicable. (duedate, hold position, etc.)
 
@@ -68,6 +64,8 @@ Returned by other classes.
 
 ### Example
 
+Returned by SFPL / Author class methods:
+
 ```
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
@@ -75,16 +73,21 @@ Returned by other classes.
 >>> book = checkedOutBooks[0] # Get the first book in the list
 >>> book.title
 'Basics of Web Design'
->>> book.version
-{'Book': 2012}
 >>> book.subtitle
 'HTML5 & CSS3'
 >>> book.status
 'Due Jun 28, 2018'
+```
+
+Created independently:
+
+```
+>>> from sfpl import Book
+>>> book = Book('Learning Python')
 >>> book.getDescription()
-Basics of Web Design: HTML, XHTML, and CSS is intended for use in a beginning web design or web development course. The text covers the basics ....
+"Get a comprehensive, in-depth introduction to the core Python language with this hands-on book. Based on author Mark Lutz's popular training course..."
 >>> book.getDetails()
-{'Publisher': 'Boston : Addison-Wesley, c2012', 'ISBN': ['9780137003389', '0137003382'], 'Call Number': '006.74 H8599mo2', 'Characteristics': 'xi, 352 p. : col. ill. ; 26 cm', 'Alternative Title': 'Web design'}
+{'Publisher': "Sebastopol, CA :, O'Reilly,, 2013", 'Edition': '5th ed', 'ISBN': ['9781449355739', '1449355730'], 'Call Number': '005.133 P999L2 2013', 'Characteristics': 'l, 1540 pages : illustrations ; 24 cm', 'Alternative Title': 'Python'}
 ```
 
 ## Author Class
@@ -131,7 +134,5 @@ Created independently:
 Calendars
 
 Events
-
-Searches
 
 Better Status Messages
