@@ -16,17 +16,30 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 ### Methods
 
+#### Read Methods
+
 ```getHolds()``` - Returns a list containing Book objects for each book in your holds.
 
 ```getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
 
 ```getForLater()```, ```getInProgress()``` and ```getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
 
+#### Write Methods
+
+```hold(book)``` - Takes a Book object as a parameter and holds the book.
+
+TODO:
+Holding errors
+
 ### Example
 
 ```
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
+>>> sfpl.getCheckouts()
+[<__main__.Book object at 0x114b284e0>, <__main__.Book object at 0x114b41c88>, <__main__.Book object at 0x114b41d30>, <__main__.Book object at 0x114b41dd8>]
+>>> [book.title for book in sfpl.getCheckouts()]
+['On Intelligence', 'Money', 'Deep Learning', 'Make your Own Neural Network']
 ```
 
 ## Book Class
@@ -43,7 +56,15 @@ Returned by other classes.
 
 ```subtitle``` - The book's subtitle.
 
+```id``` - The SFPL's id for the book. (used for holding / looking up details)
+
 ```status``` - Status of the book, if applicable. (duedate, hold position, etc.)
+
+### Methods
+
+```getDescription()``` - Returns the SFPL's description of the book.
+
+```getDetails()``` - Returns details on the book. (ISBN, Call Number, etc.)
 
 ### Example
 
@@ -60,6 +81,10 @@ Returned by other classes.
 'HTML5 & CSS3'
 >>> book.status
 'Due Jun 28, 2018'
+>>> book.getDescription()
+Basics of Web Design: HTML, XHTML, and CSS is intended for use in a beginning web design or web development course. The text covers the basics ....
+>>> book.getDetails()
+{'Publisher': 'Boston : Addison-Wesley, c2012', 'ISBN': ['9780137003389', '0137003382'], 'Call Number': '006.74 H8599mo2', 'Characteristics': 'xi, 352 p. : col. ill. ; 26 cm', 'Alternative Title': 'Web design'}
 ```
 
 ## Author Class

@@ -4,7 +4,7 @@ import os
 setup(
     name='sfpl',
     packages=['sfpl'],
-    version='1.1.4',
+    version='1.1.5',
     description='Python Scraper for SFPL Website',
     author='Kai Chang',
     url='https://github.com/kajchang/sfpl-scraper',
