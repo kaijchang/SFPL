@@ -1,4 +1,3 @@
-from robobrowser import RoboBrowser
 import requests
 from bs4 import BeautifulSoup
 
@@ -10,19 +9,16 @@ class SFPL:
             barcode (str): The library card barcode
             pin (str): PIN/ password for library account
         """
-        self.browser = RoboBrowser(parser='html.parser')
-        self.browser.open('https://sfpl.bibliocommons.com/user/login')
-        form = self.browser.get_form(class_='loginForm left')
-        form['name'] = barcode
-        form['user_pin'] = pin
-        self.browser.submit_form(form)
+        self.session = requests.Session()
+        self.session.post('https://sfpl.bibliocommons.com/user/login?destination=https%3A%2F%2Fsfpl.org%2F',
+                          data={'name': barcode, 'user_pin': pin})
 
     def hold(self, book):
         """Holds the book.
         Args:
             book (Book): Book object to hold.
         """
-        self.browser.open(
+        self.session.get(
             'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book.id))
 
     def getCheckouts(self):
@@ -30,46 +26,40 @@ class SFPL:
         Returns:
             A list of Book objects.
         """
-        self.browser.open(
-            'https://sfpl.bibliocommons.com/checkedout/index/out')
-
-        return self.parseCheckouts(self.browser.parsed)
+        return self.parseCheckouts(BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/checkedout/index/out').text, 'html.parser'))
 
     def getHolds(self):
         """Gets the user's held items.
         Returns:
             A list of Book objects.
         """
-        self.browser.open('https://sfpl.bibliocommons.com/holds')
-
-        return self.parseHolds(self.browser.parsed)
+        return self.parseHolds(BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/holds').text, 'html.parser'))
 
     def getForLater(self):
         """Get's user's for later shelf.
         Returns:
             A list of Book objects.
         """
-        self.browser.open(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/for_later')
-        return self.parseShelf(self.browser.parsed)
+        return self.parseShelf(BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/for_later').text, 'html.parser'))
 
     def getInProgress(self):
         """Get's user's in progress shelf.
         Returns:
             A list of Book objects.
         """
-        self.browser.open(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress')
-        return self.parseShelf(self.browser.parsed)
+        return self.parseShelf(BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress').text, 'html.parser'))
 
     def getCompleted(self):
         """Get's user's completed shelf.
         Returns:
             A list of Book objects.
         """
-        self.browser.open(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/completed')
-        return self.parseShelf(self.browser.parsed)
+        return self.parseShelf(BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/collection/show/my/library/completed').text, 'html.parser'))
 
     @classmethod
     def parseShelf(cls, response):
