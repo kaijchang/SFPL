@@ -63,16 +63,19 @@ class SFPL:
             'https://sfpl.bibliocommons.com/collection/show/my/library/completed')
         return self.parseShelf(self.browser.parsed)
 
-    def parseShelf(self, response):
+    @classmethod
+    def parseShelf(cls, response):
         return [Book(book.find(testid='bib_link').text, book.find(testid='author_search').text, {book.find(class_='format').find('strong').text: int(
                 book.find(class_='format').text.split('\n')[2].strip().replace('-', ''))}, book.find(class_='subTitle').text if book.find(class_='subTitle') else None) for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
-    def parseCheckouts(self, response):
+    @classmethod
+    def parseCheckouts(cls, response):
         return [Book(book.find(class_='title title_extended').text, book.find(testid='author_search').text, {book.find(class_='format').text.split('\n')[1].strip(): int(book.find(class_='format').text.split(
                 '\n')[2].strip().replace('-', ''))}, book.find(class_='subTitle').text if book.find(class_='subTitle') else None, 'Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', ''))) for book in response.find_all(
                     'div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
 
-    def parseHolds(self, response):
+    @classmethod
+    def parseHolds(cls, response):
         books = response.find_all('div', {'class': [
             'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']})
 
