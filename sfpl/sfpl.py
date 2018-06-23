@@ -15,8 +15,9 @@ class SFPL:
             pin (str): PIN/ password for library account.
         """
         self.session = requests.Session()
-        self.session.post('https://sfpl.bibliocommons.com/user/login?destination=https%3A%2F%2Fsfpl.org%2F',
-                          data={'name': barcode, 'user_pin': pin})
+        self.session.post(
+            'https://sfpl.bibliocommons.com/user/login?destination=https%3A%2F%2Fsfpl.org%2F',
+            data={'name': barcode, 'user_pin': pin})
 
     def hold(self, book):
         """Holds the book.
@@ -155,11 +156,14 @@ class Book:
         """Get's the book's details.
 
         Returns:
-            A dictionary with Publisher, Edition, ISBN, Call Number, Characteristics, and Additional Contributors.
+            A dictionary with additional data like Publisher, Edition and ISBN.
         """
         book_page = BeautifulSoup(requests.get(
             'https://sfpl.bibliocommons.com/item/show/{}'.format(self.ID)).text, 'html.parser')
-        return {k: v for (k, v) in zip([d.text.replace(':', '') for d in book_page.find_all(class_='label')], [d.text.strip().split() if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'ISBN:' else ([t.strip() for t in d.text.split('\n') if t] if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'Additional Contributors:' else d.text.strip()) for d in book_page.find_all(class_='value')])}
+        return {k: v for (k, v) in zip([d.text.replace(':', '') for d in book_page.find_all(class_='label')], [d.text.strip(
+        ).split() if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'ISBN:' else (
+            [t.strip() for t in d.text.split('\n') if t] if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(
+                d)].text == 'Additional Contributors:' else d.text.replace('\n', '').strip()) for d in book_page.find_all(class_='value')])}
 
     def __str__(self):
         return '{} by {}'.format(self.title, self.author.name)
@@ -185,14 +189,15 @@ class Author:
         """
         self.name = name
 
-    def getBooks(self):
+    def getBooks(self, pages=1):
         """Get's the first page of book written by the author.
 
         Returns:
             A list of 5 Book objects.
         """
-        return [Book(data_dict={'title': book.find('span').text, 'author': book.find('a', class_='author-link').text, 'subtitle': book.find('span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None, 'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for book in BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/v2/search?query=%22{}%22&searchType=author'.format('+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]
+        return [Book(data_dict={'title': book.find('span').text, 'author': book.find('a', class_='author-link').text, 'subtitle': book.find('span', class_='cp-subtitle').text if book.find(
+            'span', class_='cp-subtitle') else None, 'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
+                'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=author'.format(x, '+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]
 
     def __str__(self):
         return self.name

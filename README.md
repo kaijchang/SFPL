@@ -6,7 +6,12 @@ Python Package for accessing account, book, and author data from the SFPL Websit
 
 # Usage
 
-```pip install sfpl``` or clone / download this repository and ```python setup.py install```.
+Install the package:
+
+```$ pip install sfpl```
+
+Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```.
+
 
 The package has 3 classes: SFPL, Book and Author.
 
@@ -18,22 +23,22 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 #### Read Methods
 
-```getHolds()``` - Returns a list containing Book objects for each book in your holds.
+```SFPL.getHolds()``` - Returns a list containing Book objects for each book in your holds.
 
-```getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
+```SFPL.getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
 
-```getForLater()```, ```getInProgress()``` and ```getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
+```SFPL.getForLater()```, ```SFPL.getInProgress()``` and ```SFPL.getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
 
 #### Write Methods
 
-```hold(book)``` - Takes a Book object as a parameter and holds the book.
+```SFPL.hold(book)``` - Takes a Book object as a parameter and holds the book.
 
 TODO:
 Holding errors
 
 ### Example
 
-```
+```python
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
 >>> [book.title for book in sfpl.getCheckouts()]
@@ -58,15 +63,15 @@ Returned by other classes, or can be created independently.
 
 ### Methods
 
-```getDescription()``` - Returns the SFPL's description of the book.
+```Book.getDescription()``` - Returns the SFPL's description of the book.
 
-```getDetails()``` - Returns details on the book. (ISBN, Call Number, etc.)
+```Book.getDetails()``` - Returns details on the book. (ISBN, Call Number, etc.)
 
 ### Example
 
 Returned by SFPL / Author class methods:
 
-```
+```python
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
 >>> checkedOutBooks = sfpl.getCheckouts() # Get all checked out books
@@ -81,7 +86,7 @@ Returned by SFPL / Author class methods:
 
 Created independently:
 
-```
+```python
 >>> from sfpl import Book
 >>> book = Book('Learning Python')
 >>> book.getDescription()
@@ -100,16 +105,13 @@ Returned in Book objects from SFPL class methods, or can be created independentl
 
 ### Methods
 
-```getBooks()``` - Get top 5 books written by the author
-
-TODO:
-Support pagination
+```Author.getBooks(pages=1)``` - Get specified number of pages of books (5 / page) by the author.
 
 ### Examples
 
 Returned by SFPL class methods:
 
-```
+```python
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
 >>> checkedOutBooks = sfpl.getCheckouts() # Get all checked out books
@@ -120,10 +122,10 @@ Returned by SFPL class methods:
 
 Created independently:
 
-```
+```python
 >>> from sfpl import Author
 >>> author = Author('J.K. Rowling')
->>> books = author.getBooks() # Get top 5 books written by J.K. Rowling
+>>> books = author.getBooks() # Get first page of books written by J.K. Rowling
 >>> book = books[0] # Get the first book in the list
 >>> book.title
 "Harry Potter and the Sorcerer's Stone"
