@@ -1,6 +1,6 @@
 # SFPL Scraper
-![travis](https: // travis - ci.org / kajchang / sfpl - scraper.svg?branch=master)
-![pypi](https: // badge.fury.io / py / sfpl.svg)
+![travis](https://travis-ci.org/kajchang/sfpl-scraper.svg?branch=master)
+![pypi](https://badge.fury.io/py/sfpl.svg)
 
 Python Package for accessing account, book, and author data from the SFPL Website.
 
