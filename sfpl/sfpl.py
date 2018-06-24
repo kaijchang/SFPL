@@ -75,19 +75,27 @@ class SFPL:
 
     @classmethod
     def parseShelf(cls, response):
-        return [Book(data_dict={'title': book.find(testid='bib_link').text, 'author': book.find(testid='author_search').text if book.find(testid='author_search') else None, 'subtitle': book.find(
-            class_='subTitle').text if book.find(class_='subTitle') else None, 'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}) for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
+        return [Book(data_dict={'title': book.find(testid='bib_link').text,
+                                'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                                'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                                'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
+                for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     @classmethod
     def parseCheckouts(cls, response):
-        return [Book(data_dict={'title': book.find(class_='title title_extended').text, 'author': book.find(testid='author_search').text if book.find(testid='author_search') else None, 'subtitle': book.find(
-            class_='subTitle').text if book.find(class_='subTitle') else None, 'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status='Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', ''))) for book in response.find_all(
-            'div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
+        return [Book(data_dict={'title': book.find(class_='title title_extended').text,
+                                'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                                'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                                'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
+                     status='Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')))
+                for book in response.find_all('div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
 
     @classmethod
     def parseHolds(cls, response):
         books = response.find_all('div', {'class': [
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white', 'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']})
+            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white',
+            'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white',
+            'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']})
 
         book_data = []
 
@@ -106,8 +114,10 @@ class SFPL:
                 status = book.find(
                     class_='hold_position').text.strip()
 
-            book_data.append(Book(data_dict={'title': book.find(testid='bib_link').text, 'author': book.find(testid='author_search').text if book.find(testid='author_search') else None, 'subtitle': book.find(
-                class_='subTitle').text if book.find(class_='subTitle') else None, 'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
+            book_data.append(Book(data_dict={'title': book.find(testid='bib_link').text,
+                                             'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                                             'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                                             'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
 
         return book_data
 
@@ -136,9 +146,9 @@ class Book:
 
             self.title = book.find('span').text
             self.author = Author(book.find(
-                'a', class_='author-link').text if book.find(class_='author-link') else None)
+                class_='author-link').text if book.find(class_='author-link') else None)
             self.subtitle = book.find(
-                'span', class_='cp-subtitle').text if book.find('span', class_='cp-subtitle') else None
+                class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None
             self.ID = int(
                 ''.join(s for s in book.find('a')['href'] if s.isdigit()))
 
@@ -160,10 +170,25 @@ class Book:
         """
         book_page = BeautifulSoup(requests.get(
             'https://sfpl.bibliocommons.com/item/show/{}'.format(self.ID)).text, 'html.parser')
-        return {k: v for (k, v) in zip([d.text.replace(':', '') for d in book_page.find_all(class_='label')], [d.text.strip(
-        ).split() if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'ISBN:' else (
-            [t.strip() for t in d.text.split('\n') if t] if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(
-                d)].text == 'Additional Contributors:' else d.text.replace('\n', '').strip()) for d in book_page.find_all(class_='value')])}
+
+        return {k: v for (k, v) in zip(
+            [d.text.replace(':', '')
+             for d in book_page.find_all(class_='label')],
+            [d.text.strip().split() if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'ISBN:' else (
+                [t.strip() for t in d.text.split('\n') if t] if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(
+                    d)].text == 'Additional Contributors:' else ' '.join(d.text.split())) for d in book_page.find_all(class_='value')])}
+
+    def getKeywords(self):
+        """Get the book's keywords.
+
+        Returns:
+            A list of terms contained in the book.
+        """
+        book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info'.format(self.ID)).text,
+                                  'html.parser')
+
+        return book_page.find(class_='dataPair clearfix contents').find(
+            class_='value').get_text('\n').split('\n') if book_page.find(class_='dataPair clearfix contents') else []
 
     def __str__(self):
         return '{} by {}'.format(self.title, self.author.name)
@@ -184,8 +209,7 @@ class Author:
     def __init__(self, name):
         """
         Args:
-
-            name (str): Name of tha author
+            name (str): Name of the author
         """
         self.name = name
 
@@ -195,9 +219,13 @@ class Author:
         Returns:
             A list of 5 Book objects.
         """
-        return [Book(data_dict={'title': book.find('span').text, 'author': book.find('a', class_='author-link').text, 'subtitle': book.find('span', class_='cp-subtitle').text if book.find(
-            'span', class_='cp-subtitle') else None, 'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=author'.format(x, '+'.join(self.name.split()))).text, 'html.parser').find_all(class_='cp-search-result-item-content')]
+        return [Book(data_dict={'title': book.find('span').text,
+                                'author': book.find(class_='author-link').text,
+                                'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
+                                'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
+                for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
+                    'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=author'.format(x, '+'.join(self.name.split()))).text,
+            'html.parser').find_all(class_='cp-search-result-item-content')]
 
     def __str__(self):
         return self.name
