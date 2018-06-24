@@ -53,7 +53,7 @@ Returned by other classes, or can be created independently.
 
 ```title``` - Title of the book.
 
-```author``` - Author of the book as a Author object.
+```author``` - Search object for books by the same author.
 
 ```subtitle``` - The book's subtitle.
 
@@ -99,17 +99,18 @@ Created independently:
 ['Introduction to programming', 'Arithmetic, strings, and variables', 'Writing programs', 'Flow of control', 'Functions', ...]
 ```
 
-# Author Class
+# Search Class
 
 Returned in Book objects from SFPL class methods, or can be created independently.
 
 # Attributes
 
-```name``` - Name of the author
+```term``` - Name of the author.
+```_type``` - Type of search (author, keyword, tag). Defaults to keyword.
 
 # Methods
 
-```Author.getBooks(pages=1)``` - Get specified number of pages of books(5 / page) by the author.
+```Search.getBooks(pages=1)``` - Get specified number of pages of books (5 / page) by the author.
 
 # Examples
 
@@ -120,15 +121,16 @@ Returned by SFPL class methods:
 >>> sfpl = SFPL('barcode', 'pin')
 >>> checkedOutBooks = sfpl.getCheckouts()  # Get all checked out books
 >>> book = checkedOutBooks[0]  # Get the first book in the list
->>> book.author.name
+>>> book.author.term
 'Felke-Morris, Terry'
+>>> book.
 ```
 
 Created independently:
 
 ```python
->>> from sfpl import Author
->>> author = Author('J.K. Rowling')
+>>> from sfpl import Search
+>>> author = Search('J.K. Rowling', _type='author')
 >>> books = author.getBooks()  # Get first page of books written by J.K. Rowling
 >>> book = books[0]  # Get the first book in the list
 >>> book.title

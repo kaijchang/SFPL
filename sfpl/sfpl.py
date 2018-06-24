@@ -127,30 +127,17 @@ class Book:
 
     Attributes:
         title (str): The title of the book.
-        author (Author): The author of the book as an Author object.
+        author (Search): A search for books by the author of this book.
         version (dict): Dictionary mapping different mediums (str) to their publication years (int).
         subtitle (str): The subtitle of the book.
         ID (int): SFPL's ID for the book.
         status (str): The book's status, if applicable. (e.g. duedate, hold position)"""
 
-    def __init__(self, search=None, data_dict=None, status=None):
-        if data_dict:
-            self.title = data_dict['title']
-            self.author = Author(data_dict['author'])
-            self.subtitle = data_dict['subtitle']
-            self.ID = data_dict['ID']
-
-        elif search:
-            book = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/v2/search?query={}&searchType=smart'.format(
-                '+'.join(search.split()))).text, 'html.parser').find(class_='cp-search-result-item-content')
-
-            self.title = book.find('span').text
-            self.author = Author(book.find(
-                class_='author-link').text if book.find(class_='author-link') else None)
-            self.subtitle = book.find(
-                class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None
-            self.ID = int(
-                ''.join(s for s in book.find('a')['href'] if s.isdigit()))
+    def __init__(self, data_dict, status=None):
+        self.title = data_dict['title']
+        self.author = Search(data_dict['author'], 'author')
+        self.subtitle = data_dict['subtitle']
+        self.ID = data_dict['ID']
 
         self.status = status
 
@@ -200,38 +187,30 @@ class Book:
         return self.ID != other.ID
 
 
-class Author:
-    """An author of a book from the San Francisco Public Library.
+class Search:
+    def __init__(self, term, _type='keyword'):
+        if _type.lower() in ['keyword', 'title', 'author', 'subject', 'tag']:
+            self.term = term
+            self._type = _type
 
-    Attributes:
-        name (str): The name of the author."""
-
-    def __init__(self, name):
-        """
-        Args:
-            name (str): Name of the author
-        """
-        self.name = name
+        else:
+            raise Exception(
+                "Valid search types are 'keyword', 'title', 'author', 'subject' and 'tag'.")
 
     def getBooks(self, pages=1):
-        """Get's the first page of book written by the author.
-
-        Returns:
-            A list of 5 Book objects.
-        """
         return [Book(data_dict={'title': book.find('span').text,
                                 'author': book.find(class_='author-link').text,
                                 'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
                                 'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
                 for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                    'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=author'.format(x, '+'.join(self.name.split()))).text,
+                    'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(x, '+'.join(self.term.split()), self._type)).text,
             'html.parser').find_all(class_='cp-search-result-item-content')]
 
     def __str__(self):
-        return self.name
+        return self._type, self.term
 
     def __eq__(self, other):
-        return self.name == other.name
+        return self._type == other._type and self.term == other.term
 
     def __ne__(self, other):
-        return self.name != other.name
+        return self._type != other._type or self.term != other.term

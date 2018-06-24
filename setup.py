@@ -4,7 +4,7 @@ import os
 setup(
     name='sfpl',
     packages=['sfpl'],
-    version='1.1.8',
+    version='1.1.9',
     description='Unofficial Python API for SFPL',
     author='Kai Chang',
     url='https://github.com/kajchang/sfpl-scraper',

@@ -1,1 +1,1 @@
-from .sfpl import SFPL, Author, Book
+from .sfpl import SFPL, Search, Book

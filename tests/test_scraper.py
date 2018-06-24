@@ -14,7 +14,7 @@ class TestScraper(unittest.TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Fundamentals of Deep Learning')
-        self.assertEqual(result[0].author.name, 'Buduma, Nikhil')
+        self.assertEqual(result[0].author.term, 'Buduma, Nikhil')
         self.assertEqual(result[0].status, 'Pickup by:  Jun 18, 2018')
         self.assertEqual(
             result[0].subtitle, 'Designing Next-generation Machine Intelligence Algorithms')
@@ -27,7 +27,7 @@ class TestScraper(unittest.TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Basics of Web Design')
-        self.assertEqual(result[0].author.name, 'Felke-Morris, Terry')
+        self.assertEqual(result[0].author.term, 'Felke-Morris, Terry')
         self.assertEqual(result[0].status, 'Due Jun 28, 2018')
         self.assertEqual(result[0].subtitle, 'HTML5 & CSS3')
         self.assertEqual(result[0].ID, 2423174093)
@@ -39,22 +39,24 @@ class TestScraper(unittest.TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Bitcoin')
-        self.assertEqual(result[0].author.name, 'United States')
+        self.assertEqual(result[0].author.term, 'United States')
         self.assertEqual(
             result[0].subtitle, 'Examining the Benefits and Risks for Small Business : Hearing Before the Committee on Small Business, United States House of Representatives, One Hundred Thirteenth Congress, Second Session, Hearing Held April 2, 2014')
         self.assertEqual(result[0].ID, 2776977093)
 
-    def test_author(self):
-        author = sfpl.Author('J.K. Rowling')
+    def test_author_search(self):
+        author = sfpl.Search('J.K. Rowling', 'author')
         result = author.getBooks()
 
         self.assertEqual(len(result), 5)
         self.assertEqual(
             result[0].title, "Harry Potter and the Sorcerer's Stone")
-        self.assertEqual(result[0].author.name, 'Rowling, J. K.')
+        self.assertEqual(result[0].author.term, 'Rowling, J. K.')
 
-    def test_book(self):
-        book = sfpl.Book('Python')
+    def test_book_search(self):
+        books = sfpl.Search('Python')
+
+        book = books.getBooks()[0]
 
         self.assertEqual(book.getDetails(), {'Publisher': '[San Francisco, California] :, Peachpit Press,, [2014]',
                                              'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'],
