@@ -19,9 +19,9 @@ The package has 3 classes: SFPL, Book and Author.
 
 The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves.
 
-# Methods
+## Methods
 
-# Read Methods
+### Read Methods
 
 ```SFPL.getHolds()``` - Returns a list containing Book objects for each book in your holds.
 
@@ -29,14 +29,14 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 ```SFPL.getForLater()```, ```SFPL.getInProgress()``` and ```SFPL.getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
 
-# Write Methods
+### Write Methods
 
 ```SFPL.hold(book)``` - Takes a Book object as a parameter and holds the book.
 
 TODO:
 Holding errors
 
-# Example
+## Example
 
 ```python
 >>> from sfpl import SFPL
@@ -49,7 +49,7 @@ Holding errors
 
 Returned by other classes, or can be created independently.
 
-# Attributes
+## Attributes
 
 ```title``` - Title of the book.
 
@@ -61,7 +61,7 @@ Returned by other classes, or can be created independently.
 
 ```status``` - Status of the book, if applicable. (duedate, hold position, etc.)
 
-# Methods
+## Methods
 
 ```Book.getDescription()``` - Returns the SFPL's description of the book.
 
@@ -69,7 +69,7 @@ Returned by other classes, or can be created independently.
 
 ```Book.getKeywords()``` - Returns a list of terms from the book.
 
-# Example
+## Example
 
 Returned by SFPL / Author class methods:
 
@@ -103,16 +103,16 @@ Created independently:
 
 Returned in Book objects from SFPL class methods, or can be created independently.
 
-# Attributes
+## Attributes
 
 ```term``` - Name of the author.
 ```_type``` - Type of search (author, keyword, tag). Defaults to keyword.
 
-# Methods
+## Methods
 
 ```Search.getBooks(pages=1)``` - Get specified number of pages of books (5 / page) by the author.
 
-# Examples
+## Examples
 
 Returned by SFPL class methods:
 
