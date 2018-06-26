@@ -24,7 +24,7 @@ The package has 5 classes: SFPL, Search, Book, List, and User.
 
 [List Class](https://github.com/kajchang/SFPL#list-class)
 
-[User Class](https://github.com/kajchang/SFPL#user-class)
+[User Class](https://github.com/kajchang/SFPL#user-class-in-progress)
 
 
 # SFPL Class
