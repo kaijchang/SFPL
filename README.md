@@ -12,8 +12,20 @@ Install the package:
 
 Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```.
 
+The package has 5 classes: SFPL, Search, Book, List, and User.
 
-The package has 3 classes: SFPL, Book and Author.
+# Table of Contents
+
+[SFPL Class](https://github.com/kajchang/SFPL#sfpl-class)
+
+[Search Class](https://github.com/kajchang/SFPL#search-class)
+
+[Book Class](https://github.com/kajchang/SFPL#book-class)
+
+[List Class](https://github.com/kajchang/SFPL#list-class)
+
+[User Class](https://github.com/kajchang/SFPL#user-class)
+
 
 # SFPL Class
 
@@ -53,7 +65,7 @@ Returned by other classes, or can be created independently.
 
 ```title``` - Title of the book.
 
-```author``` - Search object for books by the same author.
+```author``` - The name of the book's author.
 
 ```subtitle``` - The book's subtitle.
 
@@ -71,8 +83,6 @@ Returned by other classes, or can be created independently.
 
 ## Example
 
-Returned by SFPL / Author class methods:
-
 ```python
 >>> from sfpl import SFPL
 >>> sfpl = SFPL('barcode', 'pin')
@@ -84,13 +94,42 @@ Returned by SFPL / Author class methods:
 'HTML5 & CSS3'
 >>> book.status
 'Due Jun 28, 2018'
+>>> book.author
+'Felke-Morris, Terry'
 ```
 
-Created independently:
+# Search Class
+
+Searches for books or for user-created lists.
+
+## Attributes
+
+```term``` - Name of the author.
+```_type``` - Type of search (author, keyword, tag, list). Defaults to keyword.
+
+## Methods
+
+```Search.getResults(pages)``` - Get specified number of pages of books (5 / page) by the author. Defaults to 1 page.
+
+## Examples
+
+Searches for books by a specific author:
 
 ```python
->>> from sfpl import Book
->>> book = Book('Python')
+>>> from sfpl import Search
+>>> author = Search('J.K. Rowling', _type='author')
+>>> books = author.getResults()  # Get first page of books written by J.K. Rowling
+>>> book = books[0]  # Get the first book in the list
+>>> book.title
+"Harry Potter and the Sorcerer's Stone"
+```
+
+Searches for books with a certain keyword:
+```python
+>>> from sfpl import Search
+>>> search = Search('Python') # Defaults to keyword search
+>>> books = search.getResults() # Get the first page of books with keyword 'Python'
+>>> book = books[0]  # Get the first book in the list
 >>> book.getDescription()
 'Python is a remarkably powerful dynamic programming language used in a wide variety of situations such as Web, database access ...'
 >>> book.getDetails()
@@ -99,48 +138,61 @@ Created independently:
 ['Introduction to programming', 'Arithmetic, strings, and variables', 'Writing programs', 'Flow of control', 'Functions', ...]
 ```
 
-# Search Class
+# List Class
 
-Returned in Book objects from SFPL class methods, or can be created independently.
+Returned in Searches for user-created lists.
 
 ## Attributes
 
-```term``` - Name of the author.
-```_type``` - Type of search (author, keyword, tag). Defaults to keyword.
+```_type``` - Type of list.
+
+```title``` - Title of the list.
+
+```user``` - The creator of the list as an User object.
+
+```createdOn``` - The date the list was created on.
+
+```itemCount``` - The number of books in the list.
+
+```description``` - A description of the list.
+
+```_id``` - SFPL's id for the list.
 
 ## Methods
 
-```Search.getBooks(pages=1)``` - Get specified number of pages of books (5 / page) by the author.
+```List.getBooks()``` - Returns a list of Book objects with all the books in the list.
 
-## Examples
-
-Returned by SFPL class methods:
-
-```python
->>> from sfpl import SFPL
->>> sfpl = SFPL('barcode', 'pin')
->>> checkedOutBooks = sfpl.getCheckouts()  # Get all checked out books
->>> book = checkedOutBooks[0]  # Get the first book in the list
->>> book.author.term
-'Felke-Morris, Terry'
->>> book.
-```
-
-Created independently:
+## Example
 
 ```python
 >>> from sfpl import Search
->>> author = Search('J.K. Rowling', _type='author')
->>> books = author.getBooks()  # Get first page of books written by J.K. Rowling
->>> book = books[0]  # Get the first book in the list
->>> book.title
-"Harry Potter and the Sorcerer's Stone"
+>>> search = Search('Python', _type='list')
+>>> lists = search.getResults() # Get the first page of results for user-created lists named 'Python'
+>>> _list = lists[0] # Get the first list in the list
+>>> _list._type
+'Topic Guide'
+>>> _list.title
+'python'
+>>> [book.title for book in _list.getBooks()] # Get a list of the titles of all the books in the 'Python' list.
+['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', ...]
 ```
+
+# User Class (In Progress)
+
+## Attributes 
+
+```name``` - The user's username.
+
+```_id``` - SFPL's id for the user.
 
 # TODO:
 
 Calendars
 
 Events
+
+User Interactions
+
+Search Filters
 
 Better Status Messages

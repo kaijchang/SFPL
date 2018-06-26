@@ -75,18 +75,18 @@ class SFPL:
 
     @classmethod
     def parseShelf(cls, response):
-        return [Book(data_dict={'title': book.find(testid='bib_link').text,
-                                'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                                'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                                'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
+        return [Book({'title': book.find(testid='bib_link').text,
+                      'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                      'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                      'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
                 for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     @classmethod
     def parseCheckouts(cls, response):
-        return [Book(data_dict={'title': book.find(class_='title title_extended').text,
-                                'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                                'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                                'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
+        return [Book({'title': book.find(class_='title title_extended').text,
+                      'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                      'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                      'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
                      status='Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')))
                 for book in response.find_all('div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
 
@@ -114,10 +114,10 @@ class SFPL:
                 status = book.find(
                     class_='hold_position').text.strip()
 
-            book_data.append(Book(data_dict={'title': book.find(testid='bib_link').text,
-                                             'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                                             'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                                             'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
+            book_data.append(Book({'title': book.find(testid='bib_link').text,
+                                   'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+                                   'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+                                   'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
 
         return book_data
 
@@ -135,7 +135,7 @@ class Book:
 
     def __init__(self, data_dict, status=None):
         self.title = data_dict['title']
-        self.author = Search(data_dict['author'], 'author')
+        self.author = data_dict['author']
         self.subtitle = data_dict['subtitle']
         self.ID = data_dict['ID']
 
@@ -189,22 +189,36 @@ class Book:
 
 class Search:
     def __init__(self, term, _type='keyword'):
-        if _type.lower() in ['keyword', 'title', 'author', 'subject', 'tag']:
+        if _type.lower() in ['keyword', 'title', 'author', 'subject', 'tag', 'list']:
             self.term = term
-            self._type = _type
+            self._type = _type.lower()
 
         else:
             raise Exception(
                 "Valid search types are 'keyword', 'title', 'author', 'subject' and 'tag'.")
 
-    def getBooks(self, pages=1):
-        return [Book(data_dict={'title': book.find('span').text,
-                                'author': book.find(class_='author-link').text,
-                                'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                                'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
-                for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                    'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(x, '+'.join(self.term.split()), self._type)).text,
-            'html.parser').find_all(class_='cp-search-result-item-content')]
+    def getResults(self, pages=1):
+        if self._type in ['keyword', 'title', 'author', 'subject', 'tag']:
+            return [Book({'title': book.find('span').text,
+                          'author': book.find(class_='author-link').text,
+                          'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
+                          'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
+                    for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
+                        'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(x, '+'.join(self.term.split()), self._type)).text,
+                'html.parser').find_all(class_='cp-search-result-item-content')]
+
+        elif self._type == 'list':
+            return [List({'type': _list.find(class_='list_type small').text.strip(),
+                          'title': _list.find(class_='title').text,
+                          'user': User(_list.find(class_='username').text, _list.find(class_='username')['href'].split('/')[4]) if not _list.find(class_='username muted') else _list.find(class_='username muted').text.strip(),
+                          'createdon': _list.find(class_='dataPair clearfix small list_created_date').find(class_='value').text,
+                          'itemcount': int(_list.find(class_='list_item_count').text.replace('items', '')),
+                          'description': _list.find(class_='description').text.replace('\n', ''),
+                          'id': _list.find(class_='title').find('a')['href'].split('/')[4]
+                          }
+                         ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
+                             'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
+                'html.parser').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __str__(self):
         return self._type, self.term
@@ -214,3 +228,47 @@ class Search:
 
     def __ne__(self, other):
         return self._type != other._type or self.term != other.term
+
+
+class List:
+    """A user-created list of books.
+
+    Atrributes:
+        _type (str): type of list.
+        title (str): title of the list.
+        user (User): creator of the list.
+        createdOn (str): the day the list was created.
+        itemcount (int): the number of books in the list.
+        description (str): a description of the list.
+        _id (str): SFPL's id for the list.
+    """
+
+    def __init__(self, data_dict):
+        self._type = data_dict['type']
+        self.title = data_dict['title']
+        self.user = data_dict['user']
+        self.createdOn = data_dict['createdon']
+        self.itemcount = data_dict['itemcount']
+        self.description = data_dict['description']
+        self._id = data_dict['id']
+
+    def getBooks(self):
+        return [Book({'title': book.find(class_='list_item_title').text.strip(),
+                      'author': book.find(testid='author_search').text,
+                      'subtitle': book.find(class_='list_item_subtitle').text.strip() if book.find(class_='list_item_subtitle') else None,
+                      'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
+                      }) for book in BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/list/share/{}_{}/{}'.format(
+                          self.user._id, self.user.name, self._id)).text, 'html.parser').find_all(class_='listItem bg_white col-xs-12')]
+
+
+class User:
+    """A library user account.
+
+    Attributes:
+        name (str): the account's username.
+        _id (str): the account's id.
+    """
+
+    def __init__(self, name, _id):
+        self.name = name
+        self._id = _id
