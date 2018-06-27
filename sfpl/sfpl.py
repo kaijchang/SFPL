@@ -174,7 +174,7 @@ class Book:
         Returns:
             A list of terms contained in the book.
         """
-        book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info').format(self._id).text,
+        book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info'.format(self._id)).text,
                                   'html.parser')
 
         return book_page.find(class_='dataPair clearfix contents').find(
@@ -281,7 +281,8 @@ class User:
     def __init__(self, name, _id=None):
         if not _id:
             self.name = name
-            r = requests.get('https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
+            r = requests.get(
+                'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
             if r.url == 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name):
                 raise Exception('No user found.')
