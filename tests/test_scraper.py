@@ -18,7 +18,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].status, 'Pickup by:  Jun 18, 2018')
         self.assertEqual(
             result[0].subtitle, 'Designing Next-generation Machine Intelligence Algorithms')
-        self.assertEqual(result[0].ID, 3388519093)
+        self.assertEqual(result[0]._id, 3388519093)
 
     def test_checkouts(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/checkouts.html'), encoding='utf-8') as mockup:
@@ -30,7 +30,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].author, 'Felke-Morris, Terry')
         self.assertEqual(result[0].status, 'Due Jun 28, 2018')
         self.assertEqual(result[0].subtitle, 'HTML5 & CSS3')
-        self.assertEqual(result[0].ID, 2423174093)
+        self.assertEqual(result[0]._id, 2423174093)
 
     def test_shelf(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/shelf.html'), encoding='utf-8') as mockup:
@@ -42,7 +42,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].author, 'United States')
         self.assertEqual(
             result[0].subtitle, 'Examining the Benefits and Risks for Small Business : Hearing Before the Committee on Small Business, United States House of Representatives, One Hundred Thirteenth Congress, Second Session, Hearing Held April 2, 2014')
-        self.assertEqual(result[0].ID, 2776977093)
+        self.assertEqual(result[0]._id, 2776977093)
 
     def test_author_search(self):
         author = sfpl.Search('J.K. Rowling', _type='author')
@@ -79,3 +79,13 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(_list._id, '264419518_python')
         self.assertEqual([b.title for b in _list.getBooks()], ['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', 'Test-driven Development With Python', 'Fundamentals of Python',
                                                                'The Python Standard Library by Example', 'Think Python', 'Financial Modelling in Python', 'Mastering Python Regular Expressions', 'Python in Practice', 'Python', 'Think Complexity', 'Python Network Programming Cookbook', 'Python Cookbook', 'Violent Python', 'Pro Python System Administration'])
+
+    def test_user_search(self):
+        user = sfpl.User('Sublurbanite')
+
+        self.assertEqual([u.name for u in user.getFollowers()], [
+                         'Loriel_2', 'jac523', 'WritingDeskRaven', 'Stephenson1'])
+        self.assertEqual([u.name for u in user.getFollowing()], ['monkeymind', 'Pickeringnonfiction', 'ogopogo', ' NVDPL Librarians',
+                                                                 'wplstaffpicks', 'Loriel_2', 'Mighty_Info_Ninja', 'jac523', 'WPL_Reference', 'bxrlover', 'AdamPeltier'])
+        self.assertEqual([l.title for l in user.getLists()], ["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]",
+                                                              'Funny Skeleton/Skull Covers', 'Black Strap for the Soul', 'My Favourite Biographies and Memoirs', 'Tales from Iran', 'Jewels of India', 'Sewing Fun'])

@@ -6,7 +6,10 @@ class SFPL:
     """The SFPL account class.
 
     Attributes:
-        session (requests.Session): the requests Session with the login cookies."""
+        session (requests.Session): the requests Session with the login cookies.
+    """
+
+    session = requests.Session()
 
     def __init__(self, barcode, pin):
         """
@@ -14,7 +17,7 @@ class SFPL:
             barcode (str): The library card barcode.
             pin (str): PIN/ password for library account.
         """
-        self.session = requests.Session()
+
         self.session.post(
             'https://sfpl.bibliocommons.com/user/login?destination=https%3A%2F%2Fsfpl.org%2F',
             data={'name': barcode, 'user_pin': pin})
@@ -26,7 +29,7 @@ class SFPL:
             book (Book): Book object to hold.
         """
         self.session.get(
-            'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book.ID))
+            f'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{book._id}')
 
     def getCheckouts(self):
         """Gets the user's checked out items.
@@ -78,7 +81,7 @@ class SFPL:
         return [Book({'title': book.find(testid='bib_link').text,
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                      'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
+                      '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
                 for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     @classmethod
@@ -86,8 +89,8 @@ class SFPL:
         return [Book({'title': book.find(class_='title title_extended').text,
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                      'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
-                     status='Due {}'.format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')))
+                      '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
+                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')))
                 for book in response.find_all('div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
 
     @classmethod
@@ -103,8 +106,7 @@ class SFPL:
             if book.find(class_='hold_status in_transit'):
                 location = book.find(class_='pick_up_location')
                 location.span.clear()
-                status = 'In Transit to {}'.format(
-                    location.text.strip())
+                status = f'In Transit to {location.text.strip()}'
 
             elif book.find(class_='pick_up_date'):
                 status = book.find(
@@ -117,7 +119,7 @@ class SFPL:
             book_data.append(Book({'title': book.find(testid='bib_link').text,
                                    'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                                    'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                                   'ID': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
+                                   '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
 
         return book_data
 
@@ -130,14 +132,15 @@ class Book:
         author (Search): A search for books by the author of this book.
         version (dict): Dictionary mapping different mediums (str) to their publication years (int).
         subtitle (str): The subtitle of the book.
-        ID (int): SFPL's ID for the book.
-        status (str): The book's status, if applicable. (e.g. duedate, hold position)"""
+        _id (int): SFPL's _id for the book.
+        status (str): The book's status, if applicable. (e.g. duedate, hold position)
+    """
 
     def __init__(self, data_dict, status=None):
         self.title = data_dict['title']
         self.author = data_dict['author']
         self.subtitle = data_dict['subtitle']
-        self.ID = data_dict['ID']
+        self._id = data_dict['_id']
 
         self.status = status
 
@@ -147,7 +150,7 @@ class Book:
         Returns:
             Book description."""
         return BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/item/show/{}'.format(self.ID)).text, 'html.parser').find(class_='bib_description').text.strip()
+            f'https://sfpl.bibliocommons.com/item/show/{self._id}').text, 'html.parser').find(class_='bib_description').text.strip()
 
     def getDetails(self):
         """Get's the book's details.
@@ -156,7 +159,7 @@ class Book:
             A dictionary with additional data like Publisher, Edition and ISBN.
         """
         book_page = BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/item/show/{}'.format(self.ID)).text, 'html.parser')
+            f'https://sfpl.bibliocommons.com/item/show/{self._id}').text, 'html.parser')
 
         return {k: v for (k, v) in zip(
             [d.text.replace(':', '')
@@ -171,20 +174,20 @@ class Book:
         Returns:
             A list of terms contained in the book.
         """
-        book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info'.format(self.ID)).text,
+        book_page = BeautifulSoup(requests.get(f'https://sfpl.bibliocommons.com/item/show/{self._id}?active_tab=bib_info').text,
                                   'html.parser')
 
         return book_page.find(class_='dataPair clearfix contents').find(
             class_='value').get_text('\n').split('\n') if book_page.find(class_='dataPair clearfix contents') else []
 
     def __str__(self):
-        return '{} by {}'.format(self.title, self.author.name)
+        return f'{self.title} by {self.author.name}'
 
     def __eq__(self, other):
-        return self.ID == other.ID
+        return self._id == other._id
 
     def __ne__(self, other):
-        return self.ID != other.ID
+        return self._id != other._id
 
 
 class Search:
@@ -195,16 +198,16 @@ class Search:
 
         else:
             raise Exception(
-                "Valid search types are 'keyword', 'title', 'author', 'subject' and 'tag'.")
+                "Valid search types are 'keyword', 'title', 'author', 'subject', 'tag' and 'list'")
 
     def getResults(self, pages=1):
         if self._type in ['keyword', 'title', 'author', 'subject', 'tag']:
             return [Book({'title': book.find('span').text,
                           'author': book.find(class_='author-link').text,
                           'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                          'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
+                          '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
                     for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                        'https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(x, '+'.join(self.term.split()), self._type)).text,
+                        f"https://sfpl.bibliocommons.com/v2/search?pagination_page={x}&query={' + '.join(self.term.split())}&searchType={self._type}").text,
                 'html.parser').find_all(class_='cp-search-result-item-content')]
 
         elif self._type == 'list':
@@ -217,7 +220,7 @@ class Search:
                           'id': _list.find(class_='title').find('a')['href'].split('/')[4]
                           }
                          ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
-                             'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
+                             f'https://sfpl.bibliocommons.com/search?page={x}&q={self.term}&search_category=userlist&t=userlist').text,
                 'html.parser').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __str__(self):
@@ -256,9 +259,15 @@ class List:
         return [Book({'title': book.find(class_='list_item_title').text.strip(),
                       'author': book.find(testid='author_search').text,
                       'subtitle': book.find(class_='list_item_subtitle').text.strip() if book.find(class_='list_item_subtitle') else None,
-                      'ID': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
-                      }) for book in BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/list/share/{}_{}/{}'.format(
-                          self.user._id, self.user.name, self._id)).text, 'html.parser').find_all(class_='listItem bg_white col-xs-12')]
+                      '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
+                      }) for book in BeautifulSoup(requests.get(f'https://sfpl.bibliocommons.com/list/share/{self.user._id}_{self.user.name}/{self._id}'
+                                                                ).text, 'html.parser').find_all(class_='listItem bg_white col-xs-12')]
+
+    def __eq__(self, other):
+        return self._id == other._id
+
+    def __ne__(self, other):
+        return self._id != other._id
 
 
 class User:
@@ -269,6 +278,44 @@ class User:
         _id (str): the account's id.
     """
 
-    def __init__(self, name, _id):
-        self.name = name
-        self._id = _id
+    def __init__(self, name, _id=None):
+        if not _id:
+            self.name = name
+            r = requests.get(f'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={self.name}')
+
+            if r.url == f'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={self.name}':
+                raise Exception('No user found.')
+
+            else:
+                self._id = r.url.split('/')[4]
+
+        else:
+            self.name = name
+            self._id = _id
+
+    def getFollowing(self):
+        return [User(user.find('a').text,
+                     user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
+                         f'https://sfpl.bibliocommons.com/user_profile/{self._id}/following').text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+
+    def getFollowers(self):
+        return [User(user.find('a').text,
+                     user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
+                         f'https://sfpl.bibliocommons.com/user_profile/{self._id}/followers').text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+
+    def getLists(self):
+        return [List({'type': _list.find_all('td')[1].text.strip(),
+                      'title': _list.find('a').text,
+                      'user': self,
+                      'createdon': _list.find_all('td')[2].text.strip(),
+                      'itemcount': int(_list.find_all('td')[3].text),
+                      'description': None,
+                      'id': _list.find('a')['href'].split('/')[4]
+                      }) for _list in BeautifulSoup(requests.get(
+                          f'https://sfpl.bibliocommons.com/lists/show/{self._id}').text, 'html.parser').find('tbody').find_all('tr')]
+
+    def __eq__(self, other):
+        return self._id == other._id
+
+    def __ne__(self, other):
+        return self._id != other._id

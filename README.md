@@ -12,9 +12,9 @@ Install the package:
 
 Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```.
 
-The package has 5 classes: SFPL, Search, Book, List, and User.
-
 # Table of Contents
+
+The package has 5 classes: SFPL, Search, Book, List, and User.
 
 [SFPL Class](https://github.com/kajchang/SFPL#sfpl-class)
 
@@ -24,7 +24,7 @@ The package has 5 classes: SFPL, Search, Book, List, and User.
 
 [List Class](https://github.com/kajchang/SFPL#list-class)
 
-[User Class](https://github.com/kajchang/SFPL#user-class-in-progress)
+[User Class](https://github.com/kajchang/SFPL#user-class)
 
 
 # SFPL Class
@@ -59,7 +59,7 @@ Holding errors
 
 # Book Class
 
-Returned by other classes, or can be created independently.
+A book in the SFPL database.
 
 ## Attributes
 
@@ -125,6 +125,7 @@ Searches for books by a specific author:
 ```
 
 Searches for books with a certain keyword:
+
 ```python
 >>> from sfpl import Search
 >>> search = Search('Python') # Defaults to keyword search
@@ -140,7 +141,7 @@ Searches for books with a certain keyword:
 
 # List Class
 
-Returned in Searches for user-created lists.
+User-created lists of books.
 
 ## Attributes
 
@@ -177,13 +178,36 @@ Returned in Searches for user-created lists.
 ['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', ...]
 ```
 
-# User Class (In Progress)
+# User Class
+
+A SFPL account with all of lists, shelves, and activity.
 
 ## Attributes 
 
 ```name``` - The user's username.
 
 ```_id``` - SFPL's id for the user.
+
+## Methods
+
+```User.getFollowing()``` - Returns a list with a User object for each account that the account follows.
+
+```User.getFollowers()``` - Returns a list with a User object for each account that the account is followed by.
+
+```User.getLists()``` - Returns a list with a List object for each list the account has created.
+
+## Example
+
+```python
+>>> from sfpl import User
+>>> user = User('Sublurbanite')
+>>> [u.name for u in user.getFollowers()]
+['Loriel_2', 'jac523', 'WritingDeskRaven', 'Stephenson1']
+>>> [u.name for u in user.getFollowing()]
+['monkeymind', 'Pickeringnonfiction', 'ogopogo', ...]
+>>> [l.title for l in user.getLists()]
+["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]", ...]
+```
 
 # TODO:
 
@@ -193,6 +217,8 @@ Events
 
 User Interactions
 
-Search Filters
+Boolean Search Filters
 
 Better Status Messages
+
+Full Cross-Library Bibliocommons Support
