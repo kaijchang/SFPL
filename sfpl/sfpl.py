@@ -29,7 +29,7 @@ class SFPL:
             book (Book): Book object to hold.
         """
         self.session.get(
-            f'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{book._id}')
+            'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id))
 
     def getCheckouts(self):
         """Gets the user's checked out items.
@@ -106,7 +106,7 @@ class SFPL:
             if book.find(class_='hold_status in_transit'):
                 location = book.find(class_='pick_up_location')
                 location.span.clear()
-                status = f'In Transit to {location.text.strip()}'
+                status = 'In Transit to {}'.format(location.text.strip())
 
             elif book.find(class_='pick_up_date'):
                 status = book.find(
@@ -150,7 +150,7 @@ class Book:
         Returns:
             Book description."""
         return BeautifulSoup(requests.get(
-            f'https://sfpl.bibliocommons.com/item/show/{self._id}').text, 'html.parser').find(class_='bib_description').text.strip()
+            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'html.parser').find(class_='bib_description').text.strip()
 
     def getDetails(self):
         """Get's the book's details.
@@ -159,7 +159,7 @@ class Book:
             A dictionary with additional data like Publisher, Edition and ISBN.
         """
         book_page = BeautifulSoup(requests.get(
-            f'https://sfpl.bibliocommons.com/item/show/{self._id}').text, 'html.parser')
+            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'html.parser')
 
         return {k: v for (k, v) in zip(
             [d.text.replace(':', '')
@@ -174,14 +174,14 @@ class Book:
         Returns:
             A list of terms contained in the book.
         """
-        book_page = BeautifulSoup(requests.get(f'https://sfpl.bibliocommons.com/item/show/{self._id}?active_tab=bib_info').text,
+        book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info').format(self._id).text,
                                   'html.parser')
 
         return book_page.find(class_='dataPair clearfix contents').find(
             class_='value').get_text('\n').split('\n') if book_page.find(class_='dataPair clearfix contents') else []
 
     def __str__(self):
-        return f'{self.title} by {self.author.name}'
+        return '{} by {}'.format(self.title, self.author.name)
 
     def __eq__(self, other):
         return self._id == other._id
@@ -207,7 +207,7 @@ class Search:
                           'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
                           '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
                     for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                        f"https://sfpl.bibliocommons.com/v2/search?pagination_page={x}&query={' + '.join(self.term.split())}&searchType={self._type}").text,
+                        "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}".format(x, '+'.join(self.term.split()), self._type)).text,
                 'html.parser').find_all(class_='cp-search-result-item-content')]
 
         elif self._type == 'list':
@@ -220,7 +220,7 @@ class Search:
                           'id': _list.find(class_='title').find('a')['href'].split('/')[4]
                           }
                          ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
-                             f'https://sfpl.bibliocommons.com/search?page={x}&q={self.term}&search_category=userlist&t=userlist').text,
+                             'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
                 'html.parser').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __str__(self):
@@ -260,7 +260,7 @@ class List:
                       'author': book.find(testid='author_search').text,
                       'subtitle': book.find(class_='list_item_subtitle').text.strip() if book.find(class_='list_item_subtitle') else None,
                       '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
-                      }) for book in BeautifulSoup(requests.get(f'https://sfpl.bibliocommons.com/list/share/{self.user._id}_{self.user.name}/{self._id}'
+                      }) for book in BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/list/share/{}_{}/{}'.format(self.user._id, self.user.name, self._id)
                                                                 ).text, 'html.parser').find_all(class_='listItem bg_white col-xs-12')]
 
     def __eq__(self, other):
@@ -281,9 +281,9 @@ class User:
     def __init__(self, name, _id=None):
         if not _id:
             self.name = name
-            r = requests.get(f'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={self.name}')
+            r = requests.get('https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
-            if r.url == f'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={self.name}':
+            if r.url == 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name):
                 raise Exception('No user found.')
 
             else:
@@ -296,12 +296,12 @@ class User:
     def getFollowing(self):
         return [User(user.find('a').text,
                      user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
-                         f'https://sfpl.bibliocommons.com/user_profile/{self._id}/following').text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
 
     def getFollowers(self):
         return [User(user.find('a').text,
                      user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
-                         f'https://sfpl.bibliocommons.com/user_profile/{self._id}/followers').text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
 
     def getLists(self):
         return [List({'type': _list.find_all('td')[1].text.strip(),
@@ -312,7 +312,7 @@ class User:
                       'description': None,
                       'id': _list.find('a')['href'].split('/')[4]
                       }) for _list in BeautifulSoup(requests.get(
-                          f'https://sfpl.bibliocommons.com/lists/show/{self._id}').text, 'html.parser').find('tbody').find_all('tr')]
+                          'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'html.parser').find('tbody').find_all('tr')]
 
     def __eq__(self, other):
         return self._id == other._id
