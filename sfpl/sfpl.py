@@ -123,7 +123,6 @@ class SFPL(User):
                 'bib': book._id,
                 'branch': branch._id
             }, headers={
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36',
                 'X-Requested-With': 'XMLHttpRequest'
             })
 
@@ -135,6 +134,7 @@ class SFPL(User):
 
         Raises:
             NotOnHold: If the book isn't being held.
+            NotLoggedIn: If the server doesn't accept the token.
         """
         holds = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/holds').text, 'html.parser')
@@ -155,12 +155,48 @@ class SFPL(User):
                     'X-Requested-With': 'XMLHttpRequest'
                 }).json()
 
-                if r['messages'][0]['key'] != 'Successfully cancelled hold(s).':
+                if not r['logged_in']:
                     raise sfpl.exceptions.NotLoggedIn
 
                 return
 
         raise sfpl.exceptions.NotOnHold(book.title)
+
+    def follow(self, user):
+        """Follows the user.
+
+        Args:
+            user (User): User to follow.
+
+        Raises:
+            NotLoggedIn: If the server doesn't accept the token.
+        """
+        r = self.session.put(
+            'https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}'.format(self._id, user._id), headers={
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'html.parser').find('meta', {'name': 'csrf-token'})['content']
+            }).json()
+
+        if not r['logged_in']:
+            raise sfpl.exceptions.NotLoggedIn
+
+    def unfollow(self, user):
+        """Unfollows the user.
+
+        Args:
+            user (User): User to unfollow.
+
+        Raises:
+            NotLoggedIn: If the server doesn't accept the token.
+        """
+        r = self.session.put(
+            'https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}'.format(self._id, user._id), headers={
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'html.parser').find('meta', {'name': 'csrf-token'})['content']
+            }).json()
+
+        if not r['logged_in']:
+            raise sfpl.exceptions.NotLoggedIn
 
     def getCheckouts(self):
         """Gets the user's checked out items.

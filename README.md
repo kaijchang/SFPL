@@ -16,9 +16,9 @@ Clone / download this repository and ```$ python setup.py install``` or ```$ pip
 
 The package has 6 classes: SFPL, Search, Book, List, Branch and User.
 
-[Search Class](https://github.com/kajchang/SFPL#search-class)
-
 [Book Class](https://github.com/kajchang/SFPL#book-class)
+
+[Search Class](https://github.com/kajchang/SFPL#search-class)
 
 [List Class](https://github.com/kajchang/SFPL#list-class)
 
@@ -237,9 +237,13 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 ### Write Methods
 
-```SFPL.hold(book, branch)``` - Takes a Book object and a Branch Object and holds the book at the given branch.
+```SFPL.hold(book, branch)``` - Holds the book at the given branch.
 
-```SFPL.cancelHold(book)``` - Takes a Book and cancels any holds on the book.
+```SFPL.cancelHold(book)``` - Cancels any holds on the book.
+
+```SFPL.follow(user)``` - Follow the given user.
+
+```SFPL.unfollow(user)``` - Unfollow the given user.
 
 ## Example
 
@@ -263,8 +267,6 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 Calendars
 
 Events
-
-User Interactions
 
 Boolean Search Filters
 
