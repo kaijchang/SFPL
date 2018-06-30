@@ -1,4 +1,4 @@
-# SFPL Scraper
+# SFPL
 ![travis](https://travis-ci.org/kajchang/sfpl-scraper.svg?branch=master)
 ![pypi](https://badge.fury.io/py/sfpl.svg)
 
@@ -10,13 +10,11 @@ Install the package:
 
 ```$ pip install sfpl```
 
-Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```.
+Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```
 
 # Table of Contents
 
-The package has 5 classes: SFPL, Search, Book, List, and User.
-
-[SFPL Class](https://github.com/kajchang/SFPL#sfpl-class)
+The package has 6 classes: SFPL, Search, Book, List, Branch and User.
 
 [Search Class](https://github.com/kajchang/SFPL#search-class)
 
@@ -24,40 +22,15 @@ The package has 5 classes: SFPL, Search, Book, List, and User.
 
 [List Class](https://github.com/kajchang/SFPL#list-class)
 
+[Branch Class](https://github.com/kajchang/SFPL#branch-class)
+
 [User Class](https://github.com/kajchang/SFPL#user-class)
 
-
-# SFPL Class
-
-The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves.
-
-## Methods
-
-### Read Methods
-
-```SFPL.getHolds()``` - Returns a list containing Book objects for each book in your holds.
-
-```SFPL.getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
-
-```SFPL.getForLater()```, ```SFPL.getInProgress()``` and ```SFPL.getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
-
-### Write Methods
-
-```SFPL.hold(book)``` - Takes a Book object as a parameter and holds the book.
-
-TODO:
-Holding errors
-
-## Example
-
-```python
->>> from sfpl import SFPL
->>> sfpl = SFPL('barcode', 'pin')
->>> [book.title for book in sfpl.getCheckouts()]
-['On Intelligence', 'Money', 'Deep Learning', 'Make your Own Neural Network']
-```
+[SFPL Class](https://github.com/kajchang/SFPL#sfpl-class)
 
 # Book Class
+
+[top](https://github.com/kajchang/SFPL#sfpl)
 
 A book in the SFPL database.
 
@@ -100,6 +73,8 @@ A book in the SFPL database.
 
 # Search Class
 
+[top](https://github.com/kajchang/SFPL#sfpl)
+
 Searches for books or for user-created lists.
 
 ## Attributes
@@ -141,6 +116,8 @@ Searches for books with a certain keyword:
 
 # List Class
 
+[top](https://github.com/kajchang/SFPL#sfpl)
+
 User-created lists of books.
 
 ## Attributes
@@ -178,7 +155,31 @@ User-created lists of books.
 ['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', ...]
 ```
 
+# Branch Class
+
+[top](https://github.com/kajchang/SFPL#sfpl)
+
+## Attributes
+
+```name``` - The branches name.
+
+```_id``` - SFPL's id for the library branch.
+
+## Example
+
+```python
+>>> from sfpl import Branch
+>>> branch = Branch('anza')
+>>> branch.name
+'ANZA BRANCH'
+>>> branch._id
+'44563120'
+```
+
+
 # User Class
+
+[top](https://github.com/kajchang/SFPL#sfpl)
 
 A SFPL account with all of lists, shelves, and activity.
 
@@ -208,6 +209,53 @@ A SFPL account with all of lists, shelves, and activity.
 >>> [l.title for l in user.getLists()]
 ["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]", ...]
 ```
+
+# SFPL Class
+
+[top](https://github.com/kajchang/SFPL#sfpl)
+
+The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves. The SFPL class inherits from the User class, so it also has access to all User class methods.
+
+## Attributes
+
+```name``` - Your username.
+
+```_id``` - SFPL's id for your account.
+
+```session``` - The requests Session.
+
+## Methods
+
+### Read Methods
+
+```SFPL.getHolds()``` - Returns a list containing Book objects for each book in your holds.
+
+```SFPL.getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
+
+```SFPL.getForLater()```, ```SFPL.getInProgress()``` and ```SFPL.getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
+
+### Write Methods
+
+```SFPL.hold(book, branch)``` - Takes a Book object and a Branch Object and holds the book at the given branch.
+
+```SFPL.cancelHold(book)``` - Takes a Book and cancels any holds on the book.
+
+## Example
+
+```python
+>>> from sfpl import SFPL, Branch
+>>> sfpl = SFPL('barcode', 'pin')
+>>> [book.title for book in sfpl.getHolds()]
+['Coding Games in Python', 'Python for Data Analysis', 'Automate the Boring Stuff With Python']
+>>> book = sfpl.getHolds()[0]
+>>> sfpl.cancelHold(book)
+>>> [book.title for book in sfpl.getHolds()]
+['Python for Data Analysis', 'Automate the Boring Stuff With Python']
+>>> sfpl.hold(book, Branch('anza'))
+>>> [book.title for book in sfpl.getHolds()]
+['Coding Games in Python', 'Python for Data Analysis', 'Automate the Boring Stuff With Python']
+```
+
 
 # TODO:
 
