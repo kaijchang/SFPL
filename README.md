@@ -30,7 +30,7 @@ The package has 6 classes: SFPL, Search, Book, List, Branch and User.
 
 # Book Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 A book in the SFPL database.
 
@@ -73,13 +73,14 @@ A book in the SFPL database.
 
 # Search Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 Searches for books or for user-created lists.
 
 ## Attributes
 
 ```term``` - Name of the author.
+
 ```_type``` - Type of search (author, keyword, tag, list). Defaults to keyword.
 
 ## Methods
@@ -116,7 +117,7 @@ Searches for books with a certain keyword:
 
 # List Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 User-created lists of books.
 
@@ -157,7 +158,7 @@ User-created lists of books.
 
 # Branch Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 ## Attributes
 
@@ -179,7 +180,7 @@ User-created lists of books.
 
 # User Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 A SFPL account with all of lists, shelves, and activity.
 
@@ -212,7 +213,7 @@ A SFPL account with all of lists, shelves, and activity.
 
 # SFPL Class
 
-[top](https://github.com/kajchang/SFPL#sfpl)
+[Top](https://github.com/kajchang/SFPL#sfpl)
 
 The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves. The SFPL class inherits from the User class, so it also has access to all User class methods.
 
