@@ -89,3 +89,22 @@ class TestScraper(unittest.TestCase):
                                                                  'wplstaffpicks', 'Loriel_2', 'Mighty_Info_Ninja', 'jac523', 'WPL_Reference', 'bxrlover', 'AdamPeltier'])
         self.assertEqual([l.title for l in user.getLists()], ["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]",
                                                               'Funny Skeleton/Skull Covers', 'Black Strap for the Soul', 'My Favourite Biographies and Memoirs', 'Tales from Iran', 'Jewels of India', 'Sewing Fun'])
+
+    def test_user_error(self):
+        with self.assertRaises(sfpl.exceptions.NoUserFound):
+            sfpl.User('eopghpeghip')
+
+    def test_branch(self):
+        branch = sfpl.Branch('west portal')
+        self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
+        self.assertEqual(branch._id, '44563149')
+        self.assertEqual(branch.getHours(), {'Sun': '1 - 5', 'Mon': '1 - 6', 'Tue': '10 - 9',
+                                             'Wed': '10 - 9', 'Thu': '10 - 9', 'Fri': '1 - 6', 'Sat': '10 - 6'})
+
+    def test_branch_error(self):
+        with self.assertRaises(sfpl.exceptions.NoBranchFound):
+            sfpl.Branch('eighhegiohi;eg')
+
+
+if __name__ == '__main__':
+    unittest.main()

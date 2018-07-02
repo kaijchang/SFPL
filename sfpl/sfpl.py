@@ -15,6 +15,9 @@ class User:
         """
         Args:
             name (str): The account's username.
+
+        Raises:
+            NoUserFound: If the search doesn't return any users.
         """
         if not _id:
             self.name = name
@@ -22,7 +25,7 @@ class User:
                 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
             if r.url == 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name):
-                raise Exception('No user found.')
+                raise sfpl.exceptions.NoUserFound(name)
 
             else:
                 self._id = r.url.split('/')[4]
@@ -130,7 +133,7 @@ class SFPL(User):
         """Cancels the hold on the book.
 
         Args:
-            book (Book): Book object to cancel the hold for.
+            book (Book): Book to cancel the hold for.
 
         Raises:
             NotOnHold: If the book isn't being held.
@@ -139,11 +142,7 @@ class SFPL(User):
         holds = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/holds').text, 'html.parser')
 
-        for hold in holds.find_all('div', {'class': [
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white',
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white',
-                'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']}):
-
+        for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
                 r = self.session.post('https://sfpl.bibliocommons.com/holds/delete.json', data={
                     'authenticity_token': holds.find('input', {'name': 'authenticity_token'})['value'],
@@ -205,7 +204,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseCheckouts(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/checkedout/index/out').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/checkedout').text, 'html.parser'))
 
     def getHolds(self):
         """Gets the user's held items.
@@ -257,15 +256,13 @@ class SFPL(User):
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
                       '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
-                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')))
-                for book in response.find_all('div', class_='listItem col-sm-offset-1 col-sm-10 col-xs-12 out bg_white')]
+                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book.find_all(class_='checkedout_status out')) == 2 else book.find(class_='checkedout_status overdue').text.strip())
+                for book in response.find_all('div', lambda class_: class_ and class_.startswith('listItem'))]
 
     @classmethod
     def parseHolds(cls, response):
-        books = response.find_all('div', {'class': [
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 in_transit bg_white',
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 not_yet_available bg_white',
-            'listItem col-sm-offset-1 col-sm-10 col-xs-12 ready_for_pickup bg_white']})
+        books = response.find_all(
+            'div', lambda class_: class_ and class_.startswith('listItem'))
 
         book_data = []
 
@@ -474,13 +471,9 @@ class Branch:
                     "CHINATOWN CHILDREN'S": '44563124',
                     'EUREKA VALLEY BRANCH': '44563125',
                     'EXCELSIOR BRANCH': '44563126',
-                    'Friends for Life': '44563152',
                     'GLEN PARK BRANCH': '44563127',
                     'GOLDEN GATE VALLEY BRANCH': '44563128',
-                    'Green Bookmobile': '44563155',
                     'INGLESIDE BRANCH': '44563130',
-                    'LIBRARY FOR THE BLIND': '983427677',
-                    'LIBRARY ON WHEELS': '44563158',
                     'MAIN': '44563151',
                     'MARINA BRANCH': '44563131',
                     'MERCED BRANCH': '44563132',
@@ -499,7 +492,6 @@ class Branch:
                     "RICHMOND CHILDREN'S": '44563145',
                     'SUNSET BRANCH': '44563146',
                     "SUNSET CHILDREN'S": '44563147',
-                    'TREASURE ISLAND BOOKMOBILE': '44563154',
                     'VISITACION VALLEY BRANCH': '44563148',
                     'WESTERN ADDITION BRANCH': '44563150',
                     'WEST PORTAL BRANCH': '44563149'}
@@ -511,3 +503,41 @@ class Branch:
                 return
 
         raise sfpl.exceptions.NoBranchFound(name)
+
+    def getHours(self):
+        locations = {'ANZA BRANCH': '0100000301',
+                     'BAYVIEW BRANCH': '0100000401',
+                     'BERNAL HEIGHTS BRANCH': '0100002201',
+                     'CHINATOWN BRANCH': '0100000501',
+                     "CHINATOWN CHILDREN'S": '0100000501',
+                     'EUREKA VALLEY BRANCH': '0100002301',
+                     'EXCELSIOR BRANCH': '0100000601',
+                     'GLEN PARK BRANCH': '0100000701',
+                     'GOLDEN GATE VALLEY BRANCH': '0100000801',
+                     'INGLESIDE BRANCH': '0100000901',
+                     'MAIN': '0100000101',
+                     'MARINA BRANCH': '0100001001',
+                     'MERCED BRANCH': '0100001101',
+                     'MISSION': '0100000201',
+                     'MISSION BAY BRANCH': '0100001201',
+                     'NOE VALLEY': '0100001301',
+                     'NORTH BEACH BRANCH': '0100001401',
+                     'OCEAN VIEW BRANCH': '0100001501',
+                     'ORTEGA BRANCH': '0100001601',
+                     'PARK BRANCH': '0100001701',
+                     'PARKSIDE BRANCH': '0100002401',
+                     'PORTOLA BRANCH': '0100002701',
+                     'POTRERO BRANCH': '0100002501',
+                     'PRESIDIO BRANCH': '0100002801',
+                     'RICHMOND BRANCH': '0100002601',
+                     "RICHMOND CHILDREN'S": '0100002601',
+                     'SUNSET BRANCH': '0100001801',
+                     "SUNSET CHILDREN'S": '0100001801',
+                     'VISITACION VALLEY BRANCH': '0100001901',
+                     'WESTERN ADDITION BRANCH': '0100002101',
+                     'WEST PORTAL BRANCH': '0100002001'}
+
+        schedhule = BeautifulSoup(requests.get('https://sfpl.org/index.php?pg={}'.format(
+            locations[self.name])).text, 'html.parser')
+
+        return {k: v for (k, v) in zip([d.text for d in schedhule.find_all('abbr')], [h.text for h in schedhule.find_all('dd')[0:7]])}

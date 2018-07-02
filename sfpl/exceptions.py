@@ -22,6 +22,14 @@ class NoBranchFound(Exception):
         return 'No matches found for {}.'.format(self.branch)
 
 
+class NoUserFound(Exception):
+    def __init__(self, user):
+        self.user = user
+
+    def __str__(self):
+        return 'No match found for {}'.format(self.name)
+
+
 class NotLoggedIn(Exception):
     pass
 

@@ -1,5 +1,5 @@
 # SFPL
-![travis](https://travis-ci.org/kajchang/sfpl-scraper.svg?branch=master)
+![travis](https://travis-ci.org/kajchang/SFPL.svg?branch=master)
 ![pypi](https://badge.fury.io/py/sfpl.svg)
 
 Python Package for accessing account, book, and author data from the SFPL Website.
@@ -166,6 +166,10 @@ User-created lists of books.
 
 ```_id``` - SFPL's id for the library branch.
 
+## Methods
+
+```Branch.getHours()``` - Returns a dictionary mapping days of the week to opening times.
+
 ## Example
 
 ```python
@@ -175,6 +179,8 @@ User-created lists of books.
 'ANZA BRANCH'
 >>> branch._id
 '44563120'
+>>> branch.getHours()
+{'Sun': '1 - 5', 'Mon': '12 - 6', 'Tue': '10 - 9', 'Wed': '1 - 9', 'Thu': '10 - 6', 'Fri': '1 - 6', 'Sat': '10 - 6'}
 ```
 
 
@@ -263,10 +269,6 @@ The SFPL class is allows you to access SFPL accounts and all their holds, checko
 
 
 # TODO:
-
-Calendars
-
-Events
 
 Boolean Search Filters
 
