@@ -1,277 +1,127 @@
 # SFPL
-![travis](https://travis-ci.org/kajchang/SFPL.svg?branch=master)
-![pypi](https://badge.fury.io/py/sfpl.svg)
 
 Python Package for accessing account, book, and author data from the SFPL Website.
 
-# Usage
+## Status
+![travis](https://travis-ci.org/kajchang/SFPL.svg?branch=master)
+[![pypi](https://badge.fury.io/py/sfpl.svg)](https://pypi.org/project/sfpl/)
 
-Install the package:
+## Installation
+
+From ```pip```:
 
 ```$ pip install sfpl```
 
-Clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```
+From source:
 
-# Table of Contents
+```$ pip install git+git://github.com/kajchang/SFPL.git```
 
-The package has 6 classes: SFPL, Search, Book, List, Branch and User.
+Or clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```
 
-[Book Class](https://github.com/kajchang/SFPL#book-class)
+## Frameworks Used
 
-[Search Class](https://github.com/kajchang/SFPL#search-class)
+```requests``` - Used for getting data from the SFPL website and managing login cookies.
 
-[List Class](https://github.com/kajchang/SFPL#list-class)
+```bs4``` - Used for parsing information from HTML.
 
-[Branch Class](https://github.com/kajchang/SFPL#branch-class)
+## Features
 
-[User Class](https://github.com/kajchang/SFPL#user-class)
+* Managing current checkouts and holds for your SFPL library account.
 
-[SFPL Class](https://github.com/kajchang/SFPL#sfpl-class)
+* Searching for books by keyword, title, author, subject, and tag and searching for user-created book lists.
 
-# Book Class
+* Following other library users and viewing their book lists.
 
-[Top](https://github.com/kajchang/SFPL#sfpl)
+* Getting libary branch hours.
 
-A book in the SFPL database.
+### TODO
 
-## Attributes
+* Boolean Search Filters
 
-```title``` - Title of the book.
+* Better Book Status Messages
 
-```author``` - The name of the book's author.
+## How to Use
 
-```subtitle``` - The book's subtitle.
-
-```ID``` - The SFPL's id for the book. (used for holding / looking up details)
-
-```status``` - Status of the book, if applicable. (duedate, hold position, etc.)
-
-## Methods
-
-```Book.getDescription()``` - Returns the SFPL's description of the book.
-
-```Book.getDetails()``` - Returns details on the book. (ISBN, Call Number, etc.)
-
-```Book.getKeywords()``` - Returns a list of terms from the book.
-
-## Example
+Searching for books on Python:
 
 ```python
->>> from sfpl import SFPL
->>> sfpl = SFPL('barcode', 'pin')
->>> checkedOutBooks = sfpl.getCheckouts()  # Get all checked out books
->>> book = checkedOutBooks[0]  # Get the first book in the list
->>> book.title
-'Basics of Web Design'
->>> book.subtitle
-'HTML5 & CSS3'
->>> book.status
-'Due Jun 28, 2018'
->>> book.author
-'Felke-Morris, Terry'
+>>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
+>>> python_search = Search('Python')
+>>> results = python_search.getResults(pages=2) # You can specify how many pages of results to get (defaults to 1) 
+>>> book = results[1] # Let's take a closer look at one of the books.
+>>> print(book.getDetails()) # Get some more details on the book.
+{
+	'Publisher': '[Place of publication not identified] :, Mercury Learning, , 2017', 
+	'ISBN': ['9781944534653'], 
+	'Call Number': 'EBOOK BOOKS24x7', 
+	'Characteristics': '1 online resource (549 pages) : illustrations'
+}
+>>> print(book.getDescription()) # Get a description of the book.
+'Following a practical, just-in-time presentation which gives students material as they need it ...'
 ```
 
-# Search Class
-
-[Top](https://github.com/kajchang/SFPL#sfpl)
-
-Searches for books or for user-created lists.
-
-## Attributes
-
-```term``` - Name of the author.
-
-```_type``` - Type of search (author, keyword, tag, list). Defaults to keyword.
-
-## Methods
-
-```Search.getResults(pages)``` - Get specified number of pages of books (5 / page) by the author. Defaults to 1 page.
-
-## Examples
-
-Searches for books by a specific author:
+Searching for books by J.K. Rowling:
 
 ```python
->>> from sfpl import Search
->>> author = Search('J.K. Rowling', _type='author')
->>> books = author.getResults()  # Get first page of books written by J.K. Rowling
->>> book = books[0]  # Get the first book in the list
->>> book.title
+>>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
+>>> jk_search = Search('J.K. Rowling', _type='author') # You can specify a search type (defaults to keyword)
+>>> results = jk_search.getResults()
+>>> for book in results: # Print the titles for each book.
+		print(book.title)
 "Harry Potter and the Sorcerer's Stone"
+'Harry Potter and the Prisoner of Azkaban'
+'Harry Potter and the Chamber of Secrets'
+'Harry Potter and the Cursed Child Parts One and Two'
+'Fantastic Beasts and Where to Find Them'
 ```
 
-Searches for books with a certain keyword:
+Searching for book lists related to San Francisco:
 
 ```python
->>> from sfpl import Search
->>> search = Search('Python') # Defaults to keyword search
->>> books = search.getResults() # Get the first page of books with keyword 'Python'
->>> book = books[0]  # Get the first book in the list
->>> book.getDescription()
-'Python is a remarkably powerful dynamic programming language used in a wide variety of situations such as Web, database access ...'
->>> book.getDetails()
-{'Publisher': '[San Francisco, California] :, Peachpit Press,, [2014]', 'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'], ...}
->>> book.getKeywords()
-['Introduction to programming', 'Arithmetic, strings, and variables', 'Writing programs', 'Flow of control', 'Functions', ...]
+>>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
+>>> list_search = Search('San Francisco', _type='list')
+>>> results = list_search.getResults()
+>>> _list = results[0] # Let's take a close look at one of these lists.
+>>> print(_list.name, _list._type, _list.createdOn, _list.itemcount) # Print some of the list's attributes.
+'Made in SF - San Francisco love for young readers'   'Topic Guide'   'Oct 20, 2016'   18
+>>> print(_list.user.name) # Print the name of the list creator.
+'SFPL_Kids'
+>>> for book in _list.getBooks(): # Print the titles of all the books in the list.
+		print(book.title)
+'Al Capone Does My Shirts'
+'Book Scavenger'
+'Discovering Mission San Francisco De Asis'
+'Larry Gets Lost in San Francisco'
+'Levi Strauss Gets A Bright Idea'
+'Me, Frida'
+...
 ```
 
-# List Class
-
-[Top](https://github.com/kajchang/SFPL#sfpl)
-
-User-created lists of books.
-
-## Attributes
-
-```_type``` - Type of list.
-
-```title``` - Title of the list.
-
-```user``` - The creator of the list as an User object.
-
-```createdOn``` - The date the list was created on.
-
-```itemCount``` - The number of books in the list.
-
-```description``` - A description of the list.
-
-```_id``` - SFPL's id for the list.
-
-## Methods
-
-```List.getBooks()``` - Returns a list of Book objects with all the books in the list.
-
-## Example
+Getting all your books on hold:
 
 ```python
->>> from sfpl import Search
->>> search = Search('Python', _type='list')
->>> lists = search.getResults() # Get the first page of results for user-created lists named 'Python'
->>> _list = lists[0] # Get the first list in the list
->>> _list._type
-'Topic Guide'
->>> _list.title
-'python'
->>> [book.title for book in _list.getBooks()] # Get a list of the titles of all the books in the 'Python' list.
-['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', ...]
+>>> from sfpl import SFPL # Import the SFPL class, used for interacting with your library account.
+>>> my_account = SFPL('barcode', 'pin') # Login with your barcode and pin.
+>>> my_holds = my_account.getHolds()
+>>> for book in my_holds: # Print the title for each book
+		print(book.title)
+'Python for Data Analysis'
+'Automate the Boring Stuff With Python'
+>>> for book in my_holds: # Print the hold status for each book
+		print(book.status)
+'#4 on 6 copies'
+'#7 on 3 copies'
+>>> for book in my_holds: # Print the author for each book
+		print(book.author)
+'McKinney, Wes'
+'Sweigart, Al'
 ```
 
-# Branch Class
-
-[Top](https://github.com/kajchang/SFPL#sfpl)
-
-## Attributes
-
-```name``` - The branches name.
-
-```_id``` - SFPL's id for the library branch.
-
-## Methods
-
-```Branch.getHours()``` - Returns a dictionary mapping days of the week to opening times.
-
-## Example
+Getting hours for a library branch:
 
 ```python
->>> from sfpl import Branch
+>>> from sfpl import Branch # Import the Branch class, used for interacting with library branches.
 >>> branch = Branch('anza')
->>> branch.name
-'ANZA BRANCH'
->>> branch._id
-'44563120'
 >>> branch.getHours()
 {'Sun': '1 - 5', 'Mon': '12 - 6', 'Tue': '10 - 9', 'Wed': '1 - 9', 'Thu': '10 - 6', 'Fri': '1 - 6', 'Sat': '10 - 6'}
 ```
-
-
-# User Class
-
-[Top](https://github.com/kajchang/SFPL#sfpl)
-
-A SFPL account with all of lists, shelves, and activity.
-
-## Attributes 
-
-```name``` - The user's username.
-
-```_id``` - SFPL's id for the user.
-
-## Methods
-
-```User.getFollowing()``` - Returns a list with a User object for each account that the account follows.
-
-```User.getFollowers()``` - Returns a list with a User object for each account that the account is followed by.
-
-```User.getLists()``` - Returns a list with a List object for each list the account has created.
-
-## Example
-
-```python
->>> from sfpl import User
->>> user = User('Sublurbanite')
->>> [u.name for u in user.getFollowers()]
-['Loriel_2', 'jac523', 'WritingDeskRaven', 'Stephenson1']
->>> [u.name for u in user.getFollowing()]
-['monkeymind', 'Pickeringnonfiction', 'ogopogo', ...]
->>> [l.title for l in user.getLists()]
-["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]", ...]
-```
-
-# SFPL Class
-
-[Top](https://github.com/kajchang/SFPL#sfpl)
-
-The SFPL class is allows you to access SFPL accounts and all their holds, checkouts, and shelves. The SFPL class inherits from the User class, so it also has access to all User class methods.
-
-## Attributes
-
-```name``` - Your username.
-
-```_id``` - SFPL's id for your account.
-
-```session``` - The requests Session.
-
-## Methods
-
-### Read Methods
-
-```SFPL.getHolds()``` - Returns a list containing Book objects for each book in your holds.
-
-```SFPL.getCheckouts()``` - Returns a list containing Book objects for each book you've checked out.
-
-```SFPL.getForLater()```, ```SFPL.getInProgress()``` and ```SFPL.getCompleted()``` - Return a list containing Book objects for each book in the respective shelves.
-
-### Write Methods
-
-```SFPL.hold(book, branch)``` - Holds the book at the given branch.
-
-```SFPL.cancelHold(book)``` - Cancels any holds on the book.
-
-```SFPL.follow(user)``` - Follow the given user.
-
-```SFPL.unfollow(user)``` - Unfollow the given user.
-
-## Example
-
-```python
->>> from sfpl import SFPL, Branch
->>> sfpl = SFPL('barcode', 'pin')
->>> [book.title for book in sfpl.getHolds()]
-['Coding Games in Python', 'Python for Data Analysis', 'Automate the Boring Stuff With Python']
->>> book = sfpl.getHolds()[0]
->>> sfpl.cancelHold(book)
->>> [book.title for book in sfpl.getHolds()]
-['Python for Data Analysis', 'Automate the Boring Stuff With Python']
->>> sfpl.hold(book, Branch('anza'))
->>> [book.title for book in sfpl.getHolds()]
-['Coding Games in Python', 'Python for Data Analysis', 'Automate the Boring Stuff With Python']
-```
-
-
-# TODO:
-
-Boolean Search Filters
-
-Better Status Messages
-
-Full Cross-Library Bibliocommons Support

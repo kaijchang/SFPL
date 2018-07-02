@@ -505,6 +505,11 @@ class Branch:
         raise sfpl.exceptions.NoBranchFound(name)
 
     def getHours(self):
+        """Get the operating hours of the library.
+
+        Returns:
+            A dictionary mapping days of the week to operating hours.
+        """
         locations = {'ANZA BRANCH': '0100000301',
                      'BAYVIEW BRANCH': '0100000401',
                      'BERNAL HEIGHTS BRANCH': '0100002201',
