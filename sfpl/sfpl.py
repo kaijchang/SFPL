@@ -42,7 +42,7 @@ class User:
         """
         return [User(user.find('a').text,
                      user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
-                         'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
 
     def getFollowers(self):
         """Gets all the account's followers.
@@ -52,7 +52,7 @@ class User:
         """
         return [User(user.find('a').text,
                      user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
-                         'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'html.parser').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
 
     def getLists(self):
         """Gets all the lists the user has created.
@@ -68,7 +68,7 @@ class User:
                       'description': None,
                       'id': _list.find('a')['href'].split('/')[4]
                       }) for _list in BeautifulSoup(requests.get(
-                          'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'html.parser').find('tbody').find_all('tr')]
+                          'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'lxml').find('tbody').find_all('tr')]
 
     def __str__(self):
         return self.name
@@ -108,7 +108,7 @@ class SFPL(User):
             raise sfpl.exceptions.LoginError
 
         main = BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/user_dashboard').text, 'html.parser')
+            'https://sfpl.bibliocommons.com/user_dashboard').text, 'lxml')
 
         self.name = main.find(class_='cp_user_card')['data-name']
         self._id = main.find(class_='cp_user_card')['data-id']
@@ -122,7 +122,7 @@ class SFPL(User):
         """
         self.session.post(
             'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
-                'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'html.parser').find('input', {'name': 'authenticity_token'})['value'],
+                'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
                 'bib': book._id,
                 'branch': branch._id
             }, headers={
@@ -140,7 +140,7 @@ class SFPL(User):
             NotLoggedIn: If the server doesn't accept the token.
         """
         holds = BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/holds').text, 'html.parser')
+            'https://sfpl.bibliocommons.com/holds').text, 'lxml')
 
         for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
@@ -173,7 +173,7 @@ class SFPL(User):
         r = self.session.put(
             'https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}'.format(self._id, user._id), headers={
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'html.parser').find('meta', {'name': 'csrf-token'})['content']
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
             }).json()
 
         if not r['logged_in']:
@@ -191,7 +191,7 @@ class SFPL(User):
         r = self.session.put(
             'https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}'.format(self._id, user._id), headers={
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'html.parser').find('meta', {'name': 'csrf-token'})['content']
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
             }).json()
 
         if not r['logged_in']:
@@ -204,7 +204,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseCheckouts(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/checkedout').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/checkedout').text, 'lxml'))
 
     def getHolds(self):
         """Gets the user's held items.
@@ -213,7 +213,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseHolds(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/holds').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/holds').text, 'lxml'))
 
     def getForLater(self):
         """Get's user's for later shelf.
@@ -222,7 +222,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseShelf(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/for_later').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/collection/show/my/library/for_later').text, 'lxml'))
 
     def getInProgress(self):
         """Get's user's in progress shelf.
@@ -231,7 +231,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseShelf(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress').text, 'lxml'))
 
     def getCompleted(self):
         """Get's user's completed shelf.
@@ -240,7 +240,7 @@ class SFPL(User):
             A list of Book objects.
         """
         return self.parseShelf(BeautifulSoup(self.session.get(
-            'https://sfpl.bibliocommons.com/collection/show/my/library/completed').text, 'html.parser'))
+            'https://sfpl.bibliocommons.com/collection/show/my/library/completed').text, 'lxml'))
 
     @classmethod
     def parseShelf(cls, response):
@@ -314,7 +314,7 @@ class Book:
             Book description.
         """
         return BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'html.parser').find(class_='bib_description').text.strip()
+            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'lxml').find(class_='bib_description').text.strip()
 
     def getDetails(self):
         """Get's the book's details.
@@ -323,7 +323,7 @@ class Book:
             A dictionary with additional data like Publisher, Edition and ISBN.
         """
         book_page = BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'html.parser')
+            'https://sfpl.bibliocommons.com/item/show/{}'.format(self._id)).text, 'lxml')
 
         return {k: v for (k, v) in zip(
             [d.text.replace(':', '')
@@ -339,7 +339,7 @@ class Book:
             A list of terms contained in the book.
         """
         book_page = BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info'.format(self._id)).text,
-                                  'html.parser')
+                                  'lxml')
 
         return book_page.find(class_='dataPair clearfix contents').find(
             class_='value').get_text('\n').split('\n') if book_page.find(class_='dataPair clearfix contents') else []
@@ -386,7 +386,7 @@ class Search:
                           '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
                     for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
                         "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}".format(x, '+'.join(self.term.split()), self._type)).text,
-                'html.parser').find_all(class_='cp-search-result-item-content')]
+                'lxml').find_all(class_='cp-search-result-item-content')]
 
         elif self._type == 'list':
             return [List({'type': _list.find(class_='list_type small').text.strip(),
@@ -399,7 +399,7 @@ class Search:
                           }
                          ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
                              'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
-                'html.parser').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
+                'lxml').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __eq__(self, other):
         return self._type == other._type and self.term == other.term
@@ -436,7 +436,7 @@ class List:
                       'subtitle': book.find(class_='list_item_subtitle').text.strip() if book.find(class_='list_item_subtitle') else None,
                       '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
                       }) for book in BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/list/share/{}_{}/{}'.format(self.user._id, self.user.name, self._id)
-                                                                ).text, 'html.parser').find_all(class_='listItem bg_white col-xs-12')]
+                                                                ).text, 'lxml').find_all(class_='listItem bg_white col-xs-12')]
 
     def __str__(self):
         return self.title
@@ -543,6 +543,6 @@ class Branch:
                      'WEST PORTAL BRANCH': '0100002001'}
 
         schedhule = BeautifulSoup(requests.get('https://sfpl.org/index.php?pg={}'.format(
-            locations[self.name])).text, 'html.parser')
+            locations[self.name])).text, 'lxml')
 
         return {k: v for (k, v) in zip([d.text for d in schedhule.find_all('abbr')], [h.text for h in schedhule.find_all('dd')[0:7]])}

@@ -22,7 +22,7 @@ Or clone / download this repository and ```$ python setup.py install``` or ```$ 
 
 ```requests``` - Used for getting data from the SFPL website and managing login cookies.
 
-```bs4``` - Used for parsing information from HTML.
+```bs4 + lxml``` - Used for parsing information from HTML.
 
 ## Features
 
