@@ -1,4 +1,10 @@
+# -*- coding: utf-8 -*-
+
+"""Custom exception classes raised by the sfpl module."""
+
+
 class NotOnHold(Exception):
+    """Raised when a user tries to cancel a hold on a book they aren't holding."""
     def __init__(self, book):
         self.book = book
 
@@ -7,6 +13,7 @@ class NotOnHold(Exception):
 
 
 class InvalidSearchType(Exception):
+    """Raised when a user passes an invalid search type for the Search class."""
     def __init__(self, _type):
         self._type = _type
 
@@ -15,6 +22,7 @@ class InvalidSearchType(Exception):
 
 
 class NoBranchFound(Exception):
+    """Raised when no matches are found for a user's branch search."""
     def __init__(self, branch):
         self.branch = branch
 
@@ -23,6 +31,7 @@ class NoBranchFound(Exception):
 
 
 class NoUserFound(Exception):
+    """Raised when no matches are found for a user's user search."""
     def __init__(self, user):
         self.user = user
 
@@ -31,8 +40,10 @@ class NoUserFound(Exception):
 
 
 class NotLoggedIn(Exception):
+    """Raised when an authentication token is rejected."""
     pass
 
 
 class LoginError(Exception):
+    """Raised when a user's barcode and pin are rejected."""
     pass
