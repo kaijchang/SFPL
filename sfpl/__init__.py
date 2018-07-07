@@ -1,1 +1,1 @@
-from .sfpl import SFPL, Search, User, Branch
+from .sfpl import Account, Search, User, Branch

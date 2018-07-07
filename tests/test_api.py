@@ -12,7 +12,7 @@ import sfpl
 class TestScraper(unittest.TestCase):
     def test_holds(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/holds.html'), encoding='utf-8') as mockup:
-            result = sfpl.SFPL.parseHolds(
+            result = sfpl.Account.parseHolds(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
         self.assertEqual(len(result), 1)
@@ -25,7 +25,7 @@ class TestScraper(unittest.TestCase):
 
     def test_checkouts(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/checkouts.html'), encoding='utf-8') as mockup:
-            result = sfpl.SFPL.parseCheckouts(
+            result = sfpl.Account.parseCheckouts(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
         self.assertEqual(len(result), 1)
@@ -37,7 +37,7 @@ class TestScraper(unittest.TestCase):
 
     def test_shelf(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/shelf.html'), encoding='utf-8') as mockup:
-            result = sfpl.SFPL.parseShelf(
+            result = sfpl.Account.parseShelf(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
         self.assertEqual(len(result), 1)
