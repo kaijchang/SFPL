@@ -5,9 +5,14 @@
 
 class NotOnHold(Exception):
     """Raised when a user tries to cancel a hold on a book they aren't holding."""
-
     def __init__(self, book):
         Exception.__init__(self, '{} is not on hold.'.format(self.book))
+
+
+class NotCheckedOut(Exception):
+    """Raised when a user tries to renew a book they haven't checked out."""
+    def __init__(self, book):
+        Exception.__init__(self, '{} is not checked out.'.format(self.book))
 
 
 class InvalidSearchType(Exception):
@@ -38,7 +43,13 @@ class LoginError(Exception):
 
 
 class HoldError(Exception):
-    """Raised wheb a user's hold request is denied."""
+    """Raised when a user's hold request is denied."""
+    def __init__(self, msg):
+        Exception.__init__(self, msg)
+
+
+class RenewError(Exception):
+    """Raised when a user's renew request is denied."""
     def __init__(self, msg):
         Exception.__init__(self, msg)
 

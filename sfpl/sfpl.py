@@ -125,6 +125,10 @@ class Account(User):
         Args:
             book (Book): Book object to hold.
             branch (Branch): Branch to have book delivered to.
+
+        Raises:
+            HoldError: If the hold request is denied.
+            NotLoggedIn: If the server doesn't accept the token.
         """
         r = self.session.post(
             'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
@@ -173,6 +177,48 @@ class Account(User):
                 return
 
         raise sfpl.exceptions.NotOnHold(book.title)
+
+    def renew(self, book):
+        """Renews the hold on the book.
+
+        Args:
+            book (Book): Book to renew.
+
+        Raises:
+            NotCheckedOut: If the user is trying to renew a book that they haven't checked out.
+            RenewError: If the renew request is denied.
+            NotLoggedIn: If the server doesn't accept the token.
+        """
+        checkouts = BeautifulSoup(self.session.get(
+            'https://sfpl.bibliocommons.com/checkedout').text, 'lxml')
+
+        for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem')):
+            if checkout.find(class_='title title_extended').text == book.title:
+                confirmation = self.session.get('https://sfpl.bibliocommons.com/{}'.format(
+                    checkout.find(class_='btn btn-link single_circ_action')['href']), headers={
+                    'X-CSRF-Token': checkouts.find('input', {'name': 'authenticity_token'})['value']}).json()
+
+                if not confirmation['logged_in']:
+                    raise sfpl.exceptions.NotLoggedIn
+
+                r = self.session.post('https://sfpl.bibliocommons.com/checkedout/renew', data={
+                    'authenticity_token': BeautifulSoup(confirmation['html'], 'lxml').find('input', {'name': 'authenticity_token'})['value'],
+                    'items[]': BeautifulSoup(confirmation['html'], 'lxml').find('input', id='items_')['value']
+                }, headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Referer': 'https://sfpl.bibliocommons.com/checkedout'
+                }).json()
+
+                if not r['logged_in']:
+                    raise sfpl.exceptions.NotLoggedIn
+
+                if not r['success']:
+                    raise sfpl.exceptions.RenewError(r['messages'][0]['key'])
+
+                return
+
+        raise sfpl.exceptions.NotCheckedOut(book.title)
 
     def follow(self, user):
         """Follows the user.
