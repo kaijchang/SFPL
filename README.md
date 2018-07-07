@@ -100,8 +100,8 @@ Searching for book lists related to San Francisco:
 Getting all your books on hold:
 
 ```python
->>> from sfpl import SFPL # Import the SFPL class, used for interacting with your library account.
->>> my_account = SFPL('barcode', 'pin') # Login with your barcode and pin.
+>>> from sfpl import Account # Import the Account class, used for interacting with your library account.
+>>> my_account = Account('barcode', 'pin') # Login with your barcode and pin.
 >>> my_holds = my_account.getHolds()
 >>> for book in my_holds: # Print the title for each book
 		print(book.title)

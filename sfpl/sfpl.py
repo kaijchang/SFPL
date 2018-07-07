@@ -83,7 +83,7 @@ class User:
         return self._id != other._id
 
 
-class SFPL(User):
+class Account(User):
     """The SFPL account class.
 
     Attributes:
@@ -104,17 +104,20 @@ class SFPL(User):
             LoginError: If we aren't redirected to the main page after login.
         """
         r = self.session.post(
-            'https://sfpl.bibliocommons.com/user/login?destination=https%3A%2F%2Fsfpl.org%2F',
-            data={'name': barcode, 'user_pin': pin, 'remember_me': True})
+            'https://sfpl.bibliocommons.com/user/login',
+            data={'name': barcode, 'user_pin': pin}, headers={
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }).json()
 
-        if r.url != 'https://sfpl.org/':
-            raise sfpl.exceptions.LoginError
+        if not r['logged_in']:
+            raise sfpl.exceptions.LoginError(r['messages'][0]['key'])
 
         main = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/user_dashboard').text, 'lxml')
 
-        self.name = main.find(class_='cp_user_card')['data-name']
-        self._id = main.find(class_='cp_user_card')['data-id']
+        User.__init__(self, main.find(class_='cp_user_card')[
+                      'data-name'], main.find(class_='cp_user_card')['data-id'])
 
     def hold(self, book, branch):
         """Holds the book.
@@ -123,14 +126,21 @@ class SFPL(User):
             book (Book): Book object to hold.
             branch (Branch): Branch to have book delivered to.
         """
-        self.session.post(
+        r = self.session.post(
             'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
                 'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
                 'bib': book._id,
                 'branch': branch._id
             }, headers={
-                'X-Requested-With': 'XMLHttpRequest'
-            })
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }).json()
+
+        if not r['logged_in']:
+            raise sfpl.exceptions.NotLoggedIn
+
+        if not r['success']:
+            raise sfpl.exceptions.HoldError(r['messages'][0]['key'])
 
     def cancelHold(self, book):
         """Cancels the hold on the book.
@@ -259,7 +269,7 @@ class SFPL(User):
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
                       '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
-                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book.find_all(class_='checkedout_status out')) == 2 else book.find(class_='checkedout_status overdue').text.strip())
+                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book.find_all(class_='checkedout_status out')) == 2 else (book.find(class_='checkedout_status overdue').text.strip() if book.find(class_='checkedout_status overdue') else book.find(class_='checkedout_status coming_due').text.strip()))
                 for book in response.find_all('div', lambda class_: class_ and class_.startswith('listItem'))]
 
     @classmethod
@@ -403,6 +413,9 @@ class Search:
                          ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
                              'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
                 'lxml').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
+
+    def __str__(self):
+        return 'Search Type: {} Search Term {}'.format(self._type, self.term)
 
     def __eq__(self, other):
         return self._type == other._type and self.term == other.term
@@ -549,3 +562,12 @@ class Branch:
             locations[self.name])).text, 'lxml')
 
         return {k: v for (k, v) in zip([d.text for d in schedhule.find_all('abbr')], [h.text for h in schedhule.find_all('dd')[0:7]])}
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __ne__(self, other):
+        return self.name != other.name
