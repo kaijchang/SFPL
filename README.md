@@ -8,21 +8,21 @@ Python Package for accessing account, book, and author data from the SFPL Websit
 
 ## Installation
 
-From ```pip```:
+From `pip`:
 
-```$ pip install sfpl```
+`$ pip install sfpl`
 
 From source:
 
-```$ pip install git+git://github.com/kajchang/SFPL.git```
+`$ pip install git+git://github.com/kajchang/SFPL.git`
 
-Or clone / download this repository and ```$ python setup.py install``` or ```$ pip install .```
+Or clone / download this repository and `$ python setup.py install` or `$ pip install .`
 
 ## Frameworks Used
 
-```requests``` - Used for getting data from the SFPL website and managing login cookies.
+`requests` - Used for getting data from the SFPL website and managing login cookies.
 
-```bs4 + lxml``` - Used for parsing information from HTML.
+`bs4 + lxml` - Used for parsing information from HTML.
 
 ## Features
 

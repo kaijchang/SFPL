@@ -11,7 +11,7 @@ import sfpl
 
 class TestScraper(unittest.TestCase):
     def test_holds(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/holds.html'), encoding='utf-8') as mockup:
+        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/holds.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseHolds(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
@@ -24,7 +24,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0]._id, 3388519093)
 
     def test_checkouts(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/checkouts.html'), encoding='utf-8') as mockup:
+        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/checkouts.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseCheckouts(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
@@ -36,7 +36,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0]._id, 2423174093)
 
     def test_shelf(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mockups/shelf.html'), encoding='utf-8') as mockup:
+        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/shelf.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseShelf(
                 BeautifulSoup(mockup.read(), 'html.parser'))
 
@@ -62,11 +62,11 @@ class TestScraper(unittest.TestCase):
         book = books.getResults()[0]
 
         self.assertDictEqual(book.getDetails(), {'Publisher': '[San Francisco, California] :, Peachpit Press,, [2014]',
-                                             'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'],
-                                             'Call Number': '005.133 P999do 2014', 'Characteristics': 'vii, 215 pages : illustrations ; 23 cm'})
+                                                 'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'],
+                                                 'Call Number': '005.133 P999do 2014', 'Characteristics': 'vii, 215 pages : illustrations ; 23 cm'})
         self.assertEqual(book.getDescription(), 'Python is a remarkably powerful dynamic programming language used in a wide variety of situations such as Web, database access, desktop GUIs, game and software development, and network programming. Fans of Python use the phrase "batteries included" to describe the standard library, which covers everything from asynchronous processing to zip files. The language itself is a flexible powerhouse that can handle practically any application domain.  This task-based tutorial on Python is for those new to the language and walks you through the fundamentals. You\'ll learn about arithmetic, strings, and variables; writing programs; flow of control, functions; strings; data structures; input and output; and exception handling. At the end of the book, a special section walks you through a longer, realistic application, tying the concepts of the book together.')
         self.assertListEqual(book.getKeywords(), ['Introduction to programming', 'Arithmetic, strings, and variables', 'Writing programs', 'Flow of control', 'Functions', 'Strings', 'Data structures',
-                                              'Input and output', 'Exception handling', 'Object-oriented programming', 'Case study: text statistics', 'Popular Python packages', 'Comparing Python 2 and Python 3'])
+                                                  'Input and output', 'Exception handling', 'Object-oriented programming', 'Case study: text statistics', 'Popular Python packages', 'Comparing Python 2 and Python 3'])
 
     def test_list_search(self):
         search = sfpl.Search('Python', _type='list')
@@ -81,17 +81,17 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(_list.itemcount, 17)
         self.assertEqual(_list._id, '264419518_python')
         self.assertListEqual([b.title for b in _list.getBooks()], ['Data Structures and Algorithms in Python', 'Python for Secret Agents', 'Python Forensics', 'Raspberry Pi Cookbook for Python Programmers', 'Test-driven Development With Python', 'Fundamentals of Python',
-                                                               'The Python Standard Library by Example', 'Think Python', 'Financial Modelling in Python', 'Mastering Python Regular Expressions', 'Python in Practice', 'Python', 'Think Complexity', 'Python Network Programming Cookbook', 'Python Cookbook', 'Violent Python', 'Pro Python System Administration'])
+                                                                   'The Python Standard Library by Example', 'Think Python', 'Financial Modelling in Python', 'Mastering Python Regular Expressions', 'Python in Practice', 'Python', 'Think Complexity', 'Python Network Programming Cookbook', 'Python Cookbook', 'Violent Python', 'Pro Python System Administration'])
 
     def test_user_search(self):
         user = sfpl.User('Sublurbanite')
 
         self.assertListEqual([u.name for u in user.getFollowers()], [
-                         'Loriel_2', 'jac523', 'WritingDeskRaven', 'Stephenson1'])
+            'Loriel_2', 'jac523', 'WritingDeskRaven', 'Stephenson1'])
         self.assertListEqual([u.name for u in user.getFollowing()], ['monkeymind', 'Pickeringnonfiction', 'ogopogo', ' NVDPL Librarians',
-                                                                 'wplstaffpicks', 'Loriel_2', 'Mighty_Info_Ninja', 'jac523', 'WPL_Reference', 'bxrlover', 'AdamPeltier'])
+                                                                     'wplstaffpicks', 'Loriel_2', 'Mighty_Info_Ninja', 'jac523', 'WPL_Reference', 'bxrlover', 'AdamPeltier'])
         self.assertListEqual([l.title for l in user.getLists()], ["I Can't Believe this Book Exists", "The [Insert Profession Here]'s [Insert Family Member Here]",
-                                                              'Funny Skeleton/Skull Covers', 'Black Strap for the Soul', 'My Favourite Biographies and Memoirs', 'Tales from Iran', 'Jewels of India', 'Sewing Fun'])
+                                                                  'Funny Skeleton/Skull Covers', 'Black Strap for the Soul', 'My Favourite Biographies and Memoirs', 'Tales from Iran', 'Jewels of India', 'Sewing Fun'])
 
     def test_user_error(self):
         with self.assertRaises(sfpl.exceptions.NoUserFound):
@@ -102,7 +102,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
         self.assertEqual(branch._id, '44563149')
         self.assertDictEqual(branch.getHours(), {'Sun': '1 - 5', 'Mon': '1 - 6', 'Tue': '10 - 9',
-                                             'Wed': '10 - 9', 'Thu': '10 - 9', 'Fri': '1 - 6', 'Sat': '10 - 6'})
+                                                 'Wed': '10 - 9', 'Thu': '10 - 9', 'Fri': '1 - 6', 'Sat': '10 - 6'})
 
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
@@ -111,6 +111,15 @@ class TestScraper(unittest.TestCase):
     def test_account_error(self):
         with self.assertRaises(sfpl.exceptions.LoginError):
             sfpl.Account('flbknnklvd', 'uhoegwohi')
+
+    def test_jacket_download(self):
+        books = sfpl.Search('Python')
+
+        book = books.getResults()[0]
+        book.downloadJacket('jacket')
+
+        self.assertEqual(open(os.path.join(os.path.abspath(os.path.dirname(
+            __file__)), 'assets/test.png'), 'rb').read(), open('jacket.png', 'rb').read())
 
 
 if __name__ == '__main__':

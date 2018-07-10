@@ -403,6 +403,16 @@ class Book:
         return book_page.find(class_='dataPair clearfix contents').find(
             class_='value').get_text('\n').split('\n') if book_page.find(class_='dataPair clearfix contents') else []
 
+    def downloadJacket(self, filename):
+        """Downloads the book's jacket image.
+
+        Args:
+            filename (str): The name of the file to save the image to.
+        """
+        with open('{}.png'.format(filename), 'wb') as jacket:
+            jacket.write(requests.get(BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/item/show/{}'.format(
+                self._id)).text, 'lxml').find(class_='jacketCover bib_detail')['src']).content)
+
     def __str__(self):
         return '{} by {}'.format(self.title, self.author.name)
 
