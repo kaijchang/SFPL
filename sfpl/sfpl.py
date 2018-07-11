@@ -27,11 +27,10 @@ class User:
             r = requests.get(
                 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
-            if r.url == 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name):
+            if not r.url.startswith('https://sfpl.bibliocommons.com/user_profile/'):
                 raise sfpl.exceptions.NoUserFound(name)
 
-            else:
-                self._id = r.url.split('/')[4]
+            self._id = r.url.split('/')[4]
 
         else:
             self.name = name
@@ -159,6 +158,9 @@ class Account(User):
         holds = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/holds').text, 'lxml')
 
+        if not any(hold.find(testid='bib_link').text == book.title for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12'))):
+            raise sfpl.exceptions.NotOnHold(book.title)
+
         for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
                 r = self.session.post('https://sfpl.bibliocommons.com/holds/delete.json', data={
@@ -174,10 +176,6 @@ class Account(User):
                 if not r['logged_in']:
                     raise sfpl.exceptions.NotLoggedIn
 
-                return
-
-        raise sfpl.exceptions.NotOnHold(book.title)
-
     def renew(self, book):
         """Renews the hold on the book.
 
@@ -191,6 +189,9 @@ class Account(User):
         """
         checkouts = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/checkedout').text, 'lxml')
+
+        if not any(checkout.find(class_='title title_extended').text == book.title for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem'))):
+            raise sfpl.exceptions.NotCheckedOut(book.title)
 
         for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem')):
             if checkout.find(class_='title title_extended').text == book.title:
@@ -215,10 +216,6 @@ class Account(User):
 
                 if not r['success']:
                     raise sfpl.exceptions.RenewError(r['messages'][0]['key'])
-
-                return
-
-        raise sfpl.exceptions.NotCheckedOut(book.title)
 
     def follow(self, user):
         """Follows the user.
@@ -522,10 +519,10 @@ class AdvancedSearch:
                 raise sfpl.exceptions.MissingFilterTerm
 
         include = ['{}:({})'.format(
-            [term_map[t] for t in term_map if t in term.lower()][0], kwargs[term]) for term in kwargs if 'include' in term.lower()]
+            ''.join(term_map[t] for t in term_map if t in term.lower()), kwargs[term]) for term in kwargs if 'include' in term.lower()]
 
         exclude = ['{}:({})'.format(
-            [term_map[t] for t in term_map if t in term.lower()][0], kwargs[term]) for term in kwargs if 'exclude' in term.lower()]
+            ''.join(term_map[t] for t in term_map if t in term.lower()), kwargs[term]) for term in kwargs if 'exclude' in term.lower()]
 
         self.query = '({}){}'.format(
             (' AND ' if exclusive else ' OR ').join(include), ' -' + '-'.join(exclude) if exclude else '')
