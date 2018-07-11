@@ -57,10 +57,13 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].author, 'Rowling, J. K.')
 
     def test_book_search(self):
-        books = sfpl.Search('Python')
+        search = sfpl.Search('Python')
 
-        book = books.getResults()[0]
+        results = search.getResults()
+        book = results[0]
 
+        self.assertListEqual([b.title for b in results], [
+                             'Python', 'Python!', 'Python', 'Python', 'Python'])
         self.assertDictEqual(book.getDetails(), {'Publisher': '[San Francisco, California] :, Peachpit Press,, [2014]',
                                                  'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'],
                                                  'Call Number': '005.133 P999do 2014', 'Characteristics': 'vii, 215 pages : illustrations ; 23 cm'})
@@ -113,13 +116,29 @@ class TestScraper(unittest.TestCase):
             sfpl.Account('flbknnklvd', 'uhoegwohi')
 
     def test_jacket_download(self):
-        books = sfpl.Search('Python')
+        search = sfpl.Search('Python')
 
-        book = books.getResults()[0]
+        book = search.getResults()[0]
         book.downloadJacket('jacket')
 
         self.assertEqual(open(os.path.join(os.path.abspath(os.path.dirname(
             __file__)), 'assets/test.png'), 'rb').read(), open('jacket.png', 'rb').read())
+
+    def test_advanced_search(self):
+        search = sfpl.AdvancedSearch(
+            includeauthor='J. K. Rowling', excludekeyword='Harry Potter')
+
+        results = search.getResults()
+
+        self.assertListEqual([b.title for b in results], ['Fantastic Beasts and Where to Find Them',
+                                                          'Fantastic Beasts and Where to Find Them : The Original Screenplay', 'The Casual Vacancy', 'Very Good Lives', 'Una vacante imprevista'])
+
+    def test_advanced_search_error(self):
+        with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
+            sfpl.AdvancedSearch(soemthingkeyword='Harry Potter')
+
+        with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
+            sfpl.AdvancedSearch(excludesomething='Harry Potter')
 
 
 if __name__ == '__main__':

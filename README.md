@@ -36,8 +36,6 @@ Or clone / download this repository and `$ python setup.py install` or `$ pip in
 
 ### TODO
 
-* Boolean Search Filters
-
 * Better Book Status Messages
 
 ## How to Use
@@ -66,7 +64,7 @@ Searching for books by J.K. Rowling:
 >>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
 >>> jk_search = Search('J.K. Rowling', _type='author') # You can specify a search type (defaults to keyword)
 >>> results = jk_search.getResults()
->>> for book in results: # Print the titles for each book.
+>>> for book in results:
 		print(book.title)
 "Harry Potter and the Sorcerer's Stone"
 'Harry Potter and the Prisoner of Azkaban'
@@ -86,7 +84,7 @@ Searching for book lists related to San Francisco:
 'Made in SF - San Francisco love for young readers'   'Topic Guide'   'Oct 20, 2016'   18
 >>> print(_list.user.name) # Print the name of the list creator.
 'SFPL_Kids'
->>> for book in _list.getBooks(): # Print the titles of all the books in the list.
+>>> for book in _list.getBooks():
 		print(book.title)
 'Al Capone Does My Shirts'
 'Book Scavenger'
@@ -103,18 +101,33 @@ Getting all your books on hold:
 >>> from sfpl import Account # Import the Account class, used for interacting with your library account.
 >>> my_account = Account('barcode', 'pin') # Login with your barcode and pin.
 >>> my_holds = my_account.getHolds()
->>> for book in my_holds: # Print the title for each book
+>>> for book in my_holds:
 		print(book.title)
 'Python for Data Analysis'
 'Automate the Boring Stuff With Python'
->>> for book in my_holds: # Print the hold status for each book
+>>> for book in my_holds:
 		print(book.status)
 '#4 on 6 copies'
 '#7 on 3 copies'
->>> for book in my_holds: # Print the author for each book
+>>> for book in my_holds:
 		print(book.author)
 'McKinney, Wes'
 'Sweigart, Al'
+```
+
+Searching for books by J.K. Rowling but not about Harry Potter:
+
+```python
+>>> from sfpl import AdvancedSearch # Import the AdvancedSearch class
+>>> search = AdvancedSearch(includeauthor='J.K. Rowling', excludekeyword='Harry Potter') # Search for books by J.K. Rowling but don't include 'Harry Potter'
+>>> results = search.getResults()
+>>> for book in results:
+		print(book.title)
+'Fantastic Beasts and Where to Find Them'
+'Fantastic Beasts and Where to Find Them : The Original Screenplay'
+'The Casual Vacancy'
+'Very Good Lives'
+'Una vacante imprevista'
 ```
 
 Getting hours for a library branch:
