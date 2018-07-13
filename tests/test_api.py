@@ -111,6 +111,16 @@ class TestScraper(unittest.TestCase):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
             sfpl.Branch('eighhegiohi;eg')
 
+    def test_account(self):
+        account = sfpl.Account(os.environ.get(
+            'BARCODE'), os.environ.get('PIN'))
+
+        # Just basic check for errors, not functionality
+
+        account.getHolds()
+        account.getCheckouts()
+        account.getInProgress()
+
     def test_account_error(self):
         with self.assertRaises(sfpl.exceptions.LoginError):
             sfpl.Account('flbknnklvd', 'uhoegwohi')
