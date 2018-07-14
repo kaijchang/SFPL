@@ -307,16 +307,16 @@ class Account(User):
         return self.parseShelf(BeautifulSoup(self.get(
             'https://sfpl.bibliocommons.com/collection/show/my/library/completed').text, 'lxml'))
 
-    @classmethod
-    def parseShelf(cls, response):
+    @staticmethod
+    def parseShelf(response):
         return [Book({'title': book.find(testid='bib_link').text,
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
                       '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
                 for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
 
-    @classmethod
-    def parseCheckouts(cls, response):
+    @staticmethod
+    def parseCheckouts(response):
         return [Book({'title': book.find(class_='title title_extended').text,
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
@@ -324,8 +324,8 @@ class Account(User):
                      status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book.find_all(class_='checkedout_status out')) == 2 else (book.find(class_='checkedout_status overdue').text.strip() if book.find(class_='checkedout_status overdue') else book.find(class_='checkedout_status coming_due').text.strip()))
                 for book in response.find_all('div', lambda class_: class_ and class_.startswith('listItem'))]
 
-    @classmethod
-    def parseHolds(cls, response):
+    @staticmethod
+    def parseHolds(response):
         books = response.find_all(
             'div', lambda class_: class_ and class_.startswith('listItem'))
 

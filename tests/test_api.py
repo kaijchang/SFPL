@@ -124,6 +124,8 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(open(os.path.join(os.path.abspath(os.path.dirname(
             __file__)), 'assets/test.png'), 'rb').read(), open('jacket.png', 'rb').read())
 
+        os.remove('jacket.png')
+
     def test_advanced_search(self):
         search = sfpl.AdvancedSearch(
             includeauthor='J. K. Rowling', excludekeyword='Harry Potter')
