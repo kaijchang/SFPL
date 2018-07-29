@@ -121,8 +121,9 @@ class TestScraper(unittest.TestCase):
         book = search.getResults()[0]
         book.downloadJacket('jacket')
 
-        self.assertEqual(open(os.path.join(os.path.abspath(os.path.dirname(
-            __file__)), 'assets/test.png'), 'rb').read(), open('jacket.png', 'rb').read())
+        with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/test.png'), 'rb') as file1:
+            with open('jacket.png', 'rb') as file2:
+                self.assertEqual(file1.read(), file2.read())
 
         os.remove('jacket.png')
 
