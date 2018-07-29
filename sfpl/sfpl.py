@@ -86,7 +86,7 @@ class Account(User):
     """The SFPL account class.
 
     Attributes:
-        jar (requests.cookies.RequestsCookieJar): The login cookies.
+        session (requests.Session): The requests session with cookies.
         name (str): the account's username.
         _id (str): the account's id.
     """
@@ -100,32 +100,23 @@ class Account(User):
         Raises:
             LoginError: If we aren't redirected to the main page after login.
         """
-        r = requests.post(
+        self.session = requests.Session()
+
+        r = self.session.post(
             'https://sfpl.bibliocommons.com/user/login',
             data={'name': barcode, 'user_pin': pin}, headers={
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             })
 
-        self.jar = r.cookies
-
         if not r.json()['logged_in']:
             raise sfpl.exceptions.LoginError(r.json()['messages'][0]['key'])
 
-        main = BeautifulSoup(self.get(
+        main = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/user_dashboard').text, 'lxml')
 
         User.__init__(self, main.find(class_='cp_user_card')[
                       'data-name'], main.find(class_='cp_user_card')['data-id'])
-
-    def get(self, url, **kwargs):
-        return requests.get(url, cookies=self.jar, **kwargs)
-
-    def post(self, url, **kwargs):
-        return requests.post(url, cookies=self.jar, **kwargs)
-
-    def put(self, url, **kwargs):
-        return requests.put(url, cookies=self.jar, **kwargs)
 
     def hold(self, book, branch):
         """Holds the book.
@@ -138,9 +129,9 @@ class Account(User):
             HoldError: If the hold request is denied.
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.post(
+        r = self.session.post(
             'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
-                'authenticity_token': BeautifulSoup(self.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
+                'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
                 'bib': book._id,
                 'branch': branch._id
             }, headers={
@@ -164,7 +155,7 @@ class Account(User):
             NotOnHold: If the book isn't being held.
             NotLoggedIn: If the server doesn't accept the token.
         """
-        holds = BeautifulSoup(self.get(
+        holds = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/holds').text, 'lxml')
 
         if not any(hold.find(testid='bib_link').text == book.title for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12'))):
@@ -172,7 +163,7 @@ class Account(User):
 
         for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
-                r = self.post('https://sfpl.bibliocommons.com/holds/delete.json', data={
+                r = self.session.post('https://sfpl.bibliocommons.com/holds/delete.json', data={
                     'authenticity_token': holds.find('input', {'name': 'authenticity_token'})['value'],
                     'confirm_hold_delete': True,
                     'items[]': hold.find(class_='btn btn-link single_circ_action')['href'].split('/')[3],
@@ -196,7 +187,7 @@ class Account(User):
             RenewError: If the renew request is denied.
             NotLoggedIn: If the server doesn't accept the token.
         """
-        checkouts = BeautifulSoup(self.get(
+        checkouts = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/checkedout').text, 'lxml')
 
         if not any(checkout.find(class_='title title_extended').text == book.title for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem'))):
@@ -204,14 +195,14 @@ class Account(User):
 
         for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem')):
             if checkout.find(class_='title title_extended').text == book.title:
-                confirmation = self.get('https://sfpl.bibliocommons.com/{}'.format(
+                confirmation = self.session.get('https://sfpl.bibliocommons.com/{}'.format(
                     checkout.find(class_='btn btn-link single_circ_action')['href']), headers={
                     'X-CSRF-Token': checkouts.find('input', {'name': 'authenticity_token'})['value']}).json()
 
                 if not confirmation['logged_in']:
                     raise sfpl.exceptions.NotLoggedIn
 
-                r = self.post('https://sfpl.bibliocommons.com/checkedout/renew', data={
+                r = self.session.post('https://sfpl.bibliocommons.com/checkedout/renew', data={
                     'authenticity_token': BeautifulSoup(confirmation['html'], 'lxml').find('input', {'name': 'authenticity_token'})['value'],
                     'items[]': BeautifulSoup(confirmation['html'], 'lxml').find('input', id='items_')['value']
                 }, headers={
@@ -235,10 +226,10 @@ class Account(User):
         Raises:
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.put(
+        r = self.session.put(
             'https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}'.format(self._id, user._id), headers={
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
             }).json()
 
         if not r['logged_in']:
@@ -253,10 +244,10 @@ class Account(User):
         Raises:
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.put(
+        r = self.session.put(
             'https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}'.format(self._id, user._id), headers={
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
+                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
             }).json()
 
         if not r['logged_in']:
@@ -268,7 +259,7 @@ class Account(User):
         Returns:
             A list of Book objects.
         """
-        return self.parseCheckouts(BeautifulSoup(self.get(
+        return self.parseCheckouts(BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/checkedout').text, 'lxml'))
 
     def getHolds(self):
@@ -277,7 +268,7 @@ class Account(User):
         Returns:
             A list of Book objects.
         """
-        return self.parseHolds(BeautifulSoup(self.get(
+        return self.parseHolds(BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/holds').text, 'lxml'))
 
     def getForLater(self):
@@ -286,7 +277,7 @@ class Account(User):
         Returns:
             A list of Book objects.
         """
-        return self.parseShelf(BeautifulSoup(self.get(
+        return self.parseShelf(BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/collection/show/my/library/for_later').text, 'lxml'))
 
     def getInProgress(self):
@@ -295,7 +286,7 @@ class Account(User):
         Returns:
             A list of Book objects.
         """
-        return self.parseShelf(BeautifulSoup(self.get(
+        return self.parseShelf(BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/collection/show/my/library/in_progress').text, 'lxml'))
 
     def getCompleted(self):
@@ -304,7 +295,7 @@ class Account(User):
         Returns:
             A list of Book objects.
         """
-        return self.parseShelf(BeautifulSoup(self.get(
+        return self.parseShelf(BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/collection/show/my/library/completed').text, 'lxml'))
 
     @staticmethod
