@@ -134,15 +134,19 @@ class Account(User):
             HoldError: If the hold request is denied.
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.session.post(
-            'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
-                'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
-                'bib': book._id,
-                'branch': branch._id
-            }, headers={
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }).json()
+        try:
+            r = self.session.post(
+                'https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}'.format(book._id), data={
+                    'authenticity_token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/item/show/{}'.format(book._id)).text, 'lxml').find('input', {'name': 'authenticity_token'})['value'],
+                    'bib': book._id,
+                    'branch': branch._id
+                }, headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }).json()
+
+        except TypeError:
+            raise sfpl.exceptions.NotLoggedIn
 
         if not r['logged_in']:
             raise sfpl.exceptions.NotLoggedIn
@@ -429,10 +433,10 @@ class Book:
                 'http') else 'https:{}'.format(image_url)).content)
 
     def __str__(self):
-        return '{} by {}'.format(self.title, self.author.name)
+        return '{} by {}'.format(self.title, self.author)
 
     def __repr__(self):
-        return '{} by {}'.format(self.title, self.author.name)
+        return '{} by {}'.format(self.title, self.author)
 
     def __eq__(self, other):
         return self._id == other._id
