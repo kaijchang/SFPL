@@ -2,6 +2,8 @@
 
 
 import requests
+import json
+
 from bs4 import BeautifulSoup
 import sfpl.exceptions
 
@@ -73,6 +75,9 @@ class User:
                           'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'lxml').find('tbody').find_all('tr')]
 
     def __str__(self):
+        return self.name
+
+    def __repr__(self):
         return self.name
 
     def __eq__(self, other):
@@ -226,13 +231,17 @@ class Account(User):
         Raises:
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.session.put(
-            'https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}'.format(self._id, user._id), headers={
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
-            }).json()
+        try:
+            r = self.session.put(
+                'https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}'.format(self._id, user._id), headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
+                }).json()
 
-        if not r['logged_in']:
+            if not r['logged_in']:
+                raise sfpl.exceptions.NotLoggedIn
+
+        except json.decoder.JSONDecodeError:
             raise sfpl.exceptions.NotLoggedIn
 
     def unfollow(self, user):
@@ -244,13 +253,17 @@ class Account(User):
         Raises:
             NotLoggedIn: If the server doesn't accept the token.
         """
-        r = self.session.put(
-            'https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}'.format(self._id, user._id), headers={
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
-            }).json()
+        try:
+            r = self.session.put(
+                'https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}'.format(self._id, user._id), headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': BeautifulSoup(self.session.get('https://sfpl.bibliocommons.com/user_profile/{}'.format(user._id)).text, 'lxml').find('meta', {'name': 'csrf-token'})['content']
+                }).json()
 
-        if not r['logged_in']:
+            if not r['logged_in']:
+                raise sfpl.exceptions.NotLoggedIn
+
+        except json.decoder.JSONDecodeError:
             raise sfpl.exceptions.NotLoggedIn
 
     def getCheckouts(self):
@@ -343,6 +356,9 @@ class Account(User):
 
         return book_data
 
+    def logout(self):
+        self.session.get('https://sfpl.bibliocommons.com/user/logout')
+
 
 class Book:
     """A book from the San Francisco Public Library
@@ -415,6 +431,9 @@ class Book:
     def __str__(self):
         return '{} by {}'.format(self.title, self.author.name)
 
+    def __repr__(self):
+        return '{} by {}'.format(self.title, self.author.name)
+
     def __eq__(self, other):
         return self._id == other._id
 
@@ -475,6 +494,9 @@ class Search:
                 'lxml').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __str__(self):
+        return 'Search Type: {} Search Term {}'.format(self._type, self.term)
+
+    def __repr__(self):
         return 'Search Type: {} Search Term {}'.format(self._type, self.term)
 
     def __eq__(self, other):
@@ -544,6 +566,9 @@ class AdvancedSearch:
     def __str__(self):
         return self.query
 
+    def __repr__(self):
+        return self.query
+
     def __eq__(self, other):
         return self.query == other.query
 
@@ -582,6 +607,9 @@ class List:
                                                                 ).text, 'lxml').find_all(class_='listItem bg_white col-xs-12')]
 
     def __str__(self):
+        return self.title
+
+    def __repr__(self):
         return self.title
 
     def __eq__(self, other):
@@ -648,6 +676,9 @@ class Branch:
         return {k: v for (k, v) in zip([d.text for d in schedhule.find_all('abbr')], [h.text for h in schedhule.find_all('dd')[0:7]])}
 
     def __str__(self):
+        return self.name
+
+    def __repr__(self):
         return self.name
 
     def __eq__(self, other):
