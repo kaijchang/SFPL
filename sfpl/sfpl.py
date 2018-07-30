@@ -482,10 +482,13 @@ class Search:
 
         Args:
             pages(int): Number of pages to get.
+
+        Returns:
+                list: A list of the first page of results.
         """
         if self._type in ['keyword', 'title', 'author', 'subject', 'tag']:
             return [Book({'title': book.find('span').text,
-                          'author': book.find(class_='author-link').text,
+                          'author': book.find(class_='author-link').text if book.find(class_='author-link') else None,
                           'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
                           '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
                     for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
