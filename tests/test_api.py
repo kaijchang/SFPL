@@ -134,7 +134,7 @@ class TestScraper(unittest.TestCase):
         results = search.getResults()
 
         self.assertListEqual([b.title for b in results], ['Fantastic Beasts and Where to Find Them',
-                                                          'Fantastic Beasts and Where to Find Them : The Original Screenplay', 'The Casual Vacancy', 'Very Good Lives', 'Una vacante imprevista'])
+                                                          'Fantastic Beasts and Where to Find Them : The Original Screenplay', 'The Casual Vacancy', 'Very Good Lives', 'Los cuentos de Beedle el bardo'])
 
     def test_advanced_search_error(self):
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
