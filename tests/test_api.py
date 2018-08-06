@@ -62,8 +62,7 @@ class TestScraper(unittest.TestCase):
         results = search.getResults()
         book = results[0]
 
-        self.assertListEqual([b.title for b in results], [
-                             'Python', 'Python!', 'Python', 'Python', 'Python'])
+        self.assertListEqual([b.title for b in results], ['Python', 'Python', 'Python!', 'Python', 'Python'])
         self.assertDictEqual(book.getDetails(), {'Publisher': '[San Francisco, California] :, Peachpit Press,, [2014]',
                                                  'Edition': 'Third edition', 'ISBN': ['9780321929556', '0321929551'],
                                                  'Call Number': '005.133 P999do 2014', 'Characteristics': 'vii, 215 pages : illustrations ; 23 cm'})
@@ -133,8 +132,8 @@ class TestScraper(unittest.TestCase):
 
         results = search.getResults()
 
-        self.assertListEqual([b.title for b in results], ['Fantastic Beasts and Where to Find Them',
-                                                          'Fantastic Beasts and Where to Find Them : The Original Screenplay', 'The Casual Vacancy', 'Very Good Lives', 'Los cuentos de Beedle el bardo'])
+        self.assertListEqual([b.title for b in results], ['Fantastic Beasts and Where to Find Them : The Original Screenplay',
+                                                          'Fantastic Beasts and Where to Find Them', 'The Casual Vacancy', 'Very Good Lives', 'Animales fantásticos y dónde encontrarlos'])
 
     def test_advanced_search_error(self):
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
