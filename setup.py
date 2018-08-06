@@ -16,7 +16,7 @@ setup(
         os.path.dirname(__file__)), 'README.md')).read(),
     long_description_content_type="text/markdown",
     install_requires=['beautifulsoup4==4.6.1',
-                      'requests==2.19.1', 'lxml==4.2.3'],
+                      'requests==2.19.1', 'lxml==4.2.4'],
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
