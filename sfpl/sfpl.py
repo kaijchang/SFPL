@@ -2,16 +2,15 @@
 
 
 import requests
-import json
 
 from bs4 import BeautifulSoup
-import sfpl.exceptions
+from . import exceptions
 
 
 def checkLoggedIn(fn):
     def check(self):
         if not self.loggedIn():
-            raise sfpl.exceptions.NotLoggedIn
+            raise exceptions.NotLoggedIn
     return check
 
 
@@ -37,7 +36,7 @@ class User:
                 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
             if not r.url.startswith('https://sfpl.bibliocommons.com/user_profile/'):
-                raise sfpl.exceptions.NoUserFound(name)
+                raise exceptions.NoUserFound(name)
 
             self._id = r.url.split('/')[4]
 
@@ -122,7 +121,7 @@ class Account(User):
             })
 
         if not r.json()['logged_in']:
-            raise sfpl.exceptions.LoginError(r.json()['messages'][0]['key'])
+            raise exceptions.LoginError(r.json()['messages'][0]['key'])
 
         main = BeautifulSoup(self.session.get(
             'https://sfpl.bibliocommons.com/user_dashboard').text, 'lxml')
@@ -152,10 +151,10 @@ class Account(User):
             }).json()
 
         if not r['logged_in']:
-            raise sfpl.exceptions.NotLoggedIn
+            raise exceptions.NotLoggedIn
 
         if not r['success']:
-            raise sfpl.exceptions.HoldError(r['messages'][0]['key'])
+            raise exceptions.HoldError(r['messages'][0]['key'])
 
     @checkLoggedIn
     def cancelHold(self, book):
@@ -172,7 +171,7 @@ class Account(User):
             'https://sfpl.bibliocommons.com/holds').text, 'lxml')
 
         if not any(hold.find(testid='bib_link').text == book.title for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12'))):
-            raise sfpl.exceptions.NotOnHold(book.title)
+            raise exceptions.NotOnHold(book.title)
 
         for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
@@ -187,7 +186,7 @@ class Account(User):
                 }).json()
 
                 if not r['logged_in']:
-                    raise sfpl.exceptions.NotLoggedIn
+                    raise exceptions.NotLoggedIn
 
     @checkLoggedIn
     def renew(self, book):
@@ -205,7 +204,7 @@ class Account(User):
             'https://sfpl.bibliocommons.com/checkedout').text, 'lxml')
 
         if not any(checkout.find(class_='title title_extended').text == book.title for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem'))):
-            raise sfpl.exceptions.NotCheckedOut(book.title)
+            raise exceptions.NotCheckedOut(book.title)
 
         for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem')):
             if checkout.find(class_='title title_extended').text == book.title:
@@ -214,7 +213,7 @@ class Account(User):
                     'X-CSRF-Token': checkouts.find('input', {'name': 'authenticity_token'})['value']}).json()
 
                 if not confirmation['logged_in']:
-                    raise sfpl.exceptions.NotLoggedIn
+                    raise exceptions.NotLoggedIn
 
                 r = self.session.post('https://sfpl.bibliocommons.com/checkedout/renew', data={
                     'authenticity_token': BeautifulSoup(confirmation['html'], 'lxml').find('input', {'name': 'authenticity_token'})['value'],
@@ -226,10 +225,10 @@ class Account(User):
                 }).json()
 
                 if not r['logged_in']:
-                    raise sfpl.exceptions.NotLoggedIn
+                    raise exceptions.NotLoggedIn
 
                 if not r['success']:
-                    raise sfpl.exceptions.RenewError(r['messages'][0]['key'])
+                    raise exceptions.RenewError(r['messages'][0]['key'])
 
     @checkLoggedIn
     def follow(self, user):
@@ -248,7 +247,7 @@ class Account(User):
             }).json()\
 
         if not r['logged_in']:
-            raise sfpl.exceptions.NotLoggedIn
+            raise exceptions.NotLoggedIn
 
     @checkLoggedIn
     def unfollow(self, user):
@@ -267,7 +266,7 @@ class Account(User):
             }).json()
 
         if not r['logged_in']:
-            raise sfpl.exceptions.NotLoggedIn
+            raise exceptions.NotLoggedIn
 
     @checkLoggedIn
     def getCheckouts(self):
@@ -475,7 +474,7 @@ class Search:
             self._type = _type.lower()
 
         else:
-            raise sfpl.exceptions.InvalidSearchType(_type.lower())
+            raise exceptions.InvalidSearchType(_type.lower())
 
     def getResults(self, pages=1):
         """Gets the results of the search.
@@ -553,7 +552,7 @@ class AdvancedSearch:
 
         for term in kwargs:
             if not any(term.lower() in '{}{}'.format(t, s) for t in ['include', 'exclude'] for s in term_map):
-                raise sfpl.exceptions.MissingFilterTerm
+                raise exceptions.MissingFilterTerm
 
         include = ['{}:({})'.format(
             ''.join(term_map[t] for t in term_map if t in term.lower()), kwargs[term]) for term in kwargs if 'include' in term.lower()]
@@ -666,7 +665,7 @@ class Branch:
                 self._id = branches[self.name]
                 return
 
-        raise sfpl.exceptions.NoBranchFound(name)
+        raise exceptions.NoBranchFound(name)
 
     def getHours(self):
         """Get the operating hours of the library.
