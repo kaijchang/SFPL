@@ -513,7 +513,7 @@ class Search:
 
                 soup = BeautifulSoup(resp.text, 'lxml')
 
-                if math.ceil(int(re.match(book_page_regex, next(iter(soup(text=re.compile(book_page_regex))))).group(1)) / 10) < x:
+                if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1)) / 10) < x:
                     raise StopIteration
 
                 yield [Book({'title': book.find('span').text,
@@ -528,7 +528,7 @@ class Search:
 
                 soup = BeautifulSoup(resp.text, 'lxml')
 
-                if math.ceil(int(re.match(list_page_regex, str(next(iter(soup(text=re.compile(list_page_regex))))).strip()).group(1)) / 25) < x:
+                if math.ceil(int(re.match(list_page_regex, str(soup.find(text=re.compile(list_page_regex))).strip()).group(1)) / 25) < x:
                     raise StopIteration
 
                 yield [List({'type': _list.find(class_='list_type small').text.strip(),
@@ -617,7 +617,7 @@ class AdvancedSearch:
 
             soup = BeautifulSoup(resp.text, 'lxml')
 
-            if math.ceil(int(re.match(book_page_regex, next(iter(soup(text=re.compile(book_page_regex))))).group(1)) / 10) < x:
+            if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1)) / 10) < x:
                 raise StopIteration
 
             yield [Book({'title': book.find('span').text,
