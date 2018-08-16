@@ -6,7 +6,7 @@ import os
 setup(
     name='sfpl',
     packages=['sfpl'],
-    version='1.3',
+    version='1.4',
     description='Unofficial Python API for SFPL',
     author='Kai Chang',
     author_email='kaijchang@gmail.com',
@@ -15,8 +15,8 @@ setup(
     long_description=open(os.path.join(os.path.abspath(
         os.path.dirname(__file__)), 'README.md')).read(),
     long_description_content_type="text/markdown",
-    install_requires=['beautifulsoup4==4.6.3',
-                      'requests==2.19.1', 'lxml==4.2.4'],
+    install_requires=[open(os.path.join(os.path.abspath(
+        os.path.dirname(__file__)), 'requirements.txt')).read().split('\n')[:-1]],
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
