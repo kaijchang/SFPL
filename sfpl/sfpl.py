@@ -3,8 +3,14 @@
 
 import requests
 
+import re
+
 from bs4 import BeautifulSoup
 from . import exceptions
+
+# Regex Patterns
+
+id_regex = 'https://sfpl.bibliocommons.com/.+/(\d+)'
 
 
 class User:
@@ -25,13 +31,17 @@ class User:
         """
         if not _id:
             self.name = name
+
             resp = requests.get(
                 'https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}'.format(self.name))
 
-            if not resp.url.startswith('https://sfpl.bibliocommons.com/user_profile/'):
+            match = re.match(
+                id_regex, resp.url)
+
+            if not match:
                 raise exceptions.NoUserFound(name)
 
-            self._id = resp.url.split('/')[4]
+            self._id = match.group(1)
 
         else:
             self.name = name
@@ -44,7 +54,7 @@ class User:
             list: A list of User objects.
         """
         return [User(user.find('a').text,
-                     user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
+                     re.match(id_regex, user.find('a')['href']).group(1)) for user in BeautifulSoup(requests.get(
                          'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
 
     def getFollowers(self):
@@ -54,7 +64,7 @@ class User:
             list: A list of User objects.
         """
         return [User(user.find('a').text,
-                     user.find('a')['href'].split('/')[4]) for user in BeautifulSoup(requests.get(
+                     re.match(id_regex, user.find('a')['href']).group(1)) for user in BeautifulSoup(requests.get(
                          'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
 
     def getLists(self):
@@ -667,9 +677,10 @@ class Branch:
             if name.lower() in branch.lower():
                 self.name = branch
                 self._id = branches[self.name]
-                return
+                break
 
-        raise exceptions.NoBranchFound(name)
+        else:
+            raise exceptions.NoBranchFound(name)
 
     def getHours(self):
         """Get the operating hours of the library.

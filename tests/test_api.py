@@ -13,7 +13,7 @@ class TestScraper(unittest.TestCase):
     def test_holds(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/holds.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseHolds(
-                BeautifulSoup(mockup.read(), 'html.parser'))
+                BeautifulSoup(mockup.read(), 'lxml'))
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Fundamentals of Deep Learning')
@@ -26,7 +26,7 @@ class TestScraper(unittest.TestCase):
     def test_checkouts(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/checkouts.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseCheckouts(
-                BeautifulSoup(mockup.read(), 'html.parser'))
+                BeautifulSoup(mockup.read(), 'lxml'))
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Basics of Web Design')
@@ -38,7 +38,7 @@ class TestScraper(unittest.TestCase):
     def test_shelf(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/shelf.html'), encoding='utf-8') as mockup:
             result = sfpl.Account.parseShelf(
-                BeautifulSoup(mockup.read(), 'html.parser'))
+                BeautifulSoup(mockup.read(), 'lxml'))
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].title, 'Bitcoin')
