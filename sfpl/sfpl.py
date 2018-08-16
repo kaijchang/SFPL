@@ -230,6 +230,8 @@ class Account(User):
                 if not resp.json()['logged_in']:
                     raise exceptions.NotLoggedIn
 
+                break
+
         else:
             raise exceptions.NotOnHold(book.title)
 
@@ -276,6 +278,8 @@ class Account(User):
                 if not resp.json()['success']:
                     raise exceptions.RenewError(
                         resp.json()['messages'][0]['key'])
+
+                break
 
         else:
             raise exceptions.NotCheckedOut(book.title)
