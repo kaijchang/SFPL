@@ -4,6 +4,7 @@
 import requests
 
 import re
+import math
 
 from bs4 import BeautifulSoup
 from . import exceptions
@@ -11,6 +12,8 @@ from . import exceptions
 # Regex Patterns
 
 id_regex = 'https://sfpl.bibliocommons.com/.+/(\d+)'
+book_page_regex = '\d+ to \d+ of (\d+) groups'
+list_page_regex = '\d+ - \d+ of (\d+) items'
 
 
 class User:
@@ -55,7 +58,7 @@ class User:
         """
         return [User(user.find('a').text,
                      re.match(id_regex, user.find('a')['href']).group(1)) for user in BeautifulSoup(requests.get(
-                         'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/following'.format(self._id)).text, 'lxml')(class_='col-xs-12 col-md-4')]
 
     def getFollowers(self):
         """Gets all the account's followers.
@@ -65,7 +68,7 @@ class User:
         """
         return [User(user.find('a').text,
                      re.match(id_regex, user.find('a')['href']).group(1)) for user in BeautifulSoup(requests.get(
-                         'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'lxml').find_all(class_='col-xs-12 col-md-4')]
+                         'https://sfpl.bibliocommons.com/user_profile/{}/followers'.format(self._id)).text, 'lxml')(class_='col-xs-12 col-md-4')]
 
     def getLists(self):
         """Gets all the lists the user has created.
@@ -73,15 +76,15 @@ class User:
         Returns:
             list: A list of List objects.
         """
-        return [List({'type': _list.find_all('td')[1].text.strip(),
+        return [List({'type': _list('td')[1].text.strip(),
                       'title': _list.find('a').text,
                       'user': self,
-                      'createdon': _list.find_all('td')[2].text.strip(),
-                      'itemcount': int(_list.find_all('td')[3].text),
+                      'createdon': _list('td')[2].text.strip(),
+                      'itemcount': int(_list('td')[3].text),
                       'description': None,
                       'id': _list.find('a')['href'].split('/')[4]
                       }) for _list in BeautifulSoup(requests.get(
-                          'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'lxml').find('tbody').find_all('tr')]
+                          'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'lxml').find('tbody')('tr')]
 
     def getForLater(self):
         """Get's user's for later shelf.
@@ -116,7 +119,7 @@ class User:
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
                       '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
-                for book in response.find_all('div', lambda value: value and value.startswith('listItem clearfix'))]
+                for book in response('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     def __str__(self):
         return self.name
@@ -212,7 +215,7 @@ class Account(User):
 
         holds = BeautifulSoup(resp.text, 'lxml')
 
-        for hold in holds.find_all('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
+        for hold in holds('div', lambda class_: class_ and class_.startswith('listItem col-sm-offset-1 col-sm-10 col-xs-12')):
             if hold.find(testid='bib_link').text == book.title:
                 resp = self.session.post('https://sfpl.bibliocommons.com/holds/delete.json', data={
                     'authenticity_token': holds.find('input', {'name': 'authenticity_token'})['value'],
@@ -249,7 +252,7 @@ class Account(User):
 
         checkouts = BeautifulSoup(resp.text, 'lxml')
 
-        for checkout in checkouts.find_all('div', lambda class_: class_ and class_.startswith('listItem')):
+        for checkout in checkouts('div', lambda class_: class_ and class_.startswith('listItem')):
             if checkout.find(class_='title title_extended').text == book.title:
                 confirmation = self.session.get('https://sfpl.bibliocommons.com/{}'.format(
                     checkout.find(class_='btn btn-link single_circ_action')['href']), headers={
@@ -347,12 +350,12 @@ class Account(User):
                       'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
                       'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
                       '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
-                     status="Due {}".format(book.find_all(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book.find_all(class_='checkedout_status out')) == 2 else (book.find(class_='checkedout_status overdue').text.strip() if book.find(class_='checkedout_status overdue') else book.find(class_='checkedout_status coming_due').text.strip()))
-                for book in response.find_all('div', lambda class_: class_ and class_.startswith('listItem'))]
+                     status="Due {}".format(book(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book(class_='checkedout_status out')) == 2 else (book.find(class_='checkedout_status overdue').text.strip() if book.find(class_='checkedout_status overdue') else book.find(class_='checkedout_status coming_due').text.strip()))
+                for book in response('div', lambda class_: class_ and class_.startswith('listItem'))]
 
     @staticmethod
     def parseHolds(response):
-        books = response.find_all(
+        books = response(
             'div', lambda class_: class_ and class_.startswith('listItem'))
 
         book_data = []
@@ -424,10 +427,10 @@ class Book:
 
         return {k: v for (k, v) in zip(
             [d.text.replace(':', '')
-             for d in book_page.find_all(class_='label')],
-            [d.text.strip().split() if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(d)].text == 'ISBN:' else (
-                [t.strip() for t in d.text.split('\n') if t] if book_page.find_all(class_='label')[book_page.find_all(class_='value').index(
-                    d)].text == 'Additional Contributors:' else ' '.join(d.text.split())) for d in book_page.find_all(class_='value')])}
+             for d in book_page(class_='label')],
+            [d.text.strip().split() if book_page(class_='label')[book_page(class_='value').index(d)].text == 'ISBN:' else (
+                [t.strip() for t in d.text.split('\n') if t] if book_page(class_='label')[book_page(class_='value').index(
+                    d)].text == 'Additional Contributors:' else ' '.join(d.text.split())) for d in book_page(class_='value')])}
 
     def getKeywords(self):
         """Get the book's keywords.
@@ -454,10 +457,10 @@ class Book:
                 'http') else 'https:{}'.format(image_url)).content)
 
     def __str__(self):
-        return '{} by {}'.format(self.title, self.author)
+        return '{} by {}'.format(self.title, self.author) if self.author else self.title
 
     def __repr__(self):
-        return '{} by {}'.format(self.title, self.author)
+        return '{} by {}'.format(self.title, self.author) if self.author else self.title
 
     def __eq__(self, other):
         return self._id == other._id
@@ -496,30 +499,42 @@ class Search:
         Args:
             pages(int): Number of pages to get.
 
-        Returns:
-                list: A list of the first page of results.
+        Yields:
+            list: A list of books or lists on the page.
         """
         if self._type in ['keyword', 'title', 'author', 'subject', 'tag']:
-            return [Book({'title': book.find('span').text,
-                          'author': book.find(class_='author-link').text if book.find(class_='author-link') else None,
-                          'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                          '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
-                    for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                        "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}".format(x, '+'.join(self.term.split()), self._type)).text,
-                'lxml').find_all(class_='cp-search-result-item-content')]
+            for x in range(1, pages + 1):
+                resp = requests.get('https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(
+                    x, '+'.join(self.term.split()), self._type))
+
+                soup = BeautifulSoup(resp.text, 'lxml')
+
+                if math.ceil(int(re.match(book_page_regex, next(iter(soup(text=re.compile(book_page_regex))))).group(1)) / 10) < x:
+                    raise StopIteration
+
+                yield [Book({'title': book.find('span').text,
+                             'author': book.find(class_='author-link').text if book.find(class_='author-link') else None,
+                             'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
+                             '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for book in soup(class_='cp-search-result-item-content')]
 
         elif self._type == 'list':
-            return [List({'type': _list.find(class_='list_type small').text.strip(),
-                          'title': _list.find(class_='title').text,
-                          'user': User(_list.find(class_='username').text, _list.find(class_='username')['href'].split('/')[4]) if not _list.find(class_='username muted') else _list.find(class_='username muted').text.strip(),
-                          'createdon': _list.find(class_='dataPair clearfix small list_created_date').find(class_='value').text,
-                          'itemcount': int(_list.find(class_='list_item_count').text.replace('items', '')),
-                          'description': _list.find(class_='description').text.replace('\n', ''),
-                          'id': _list.find(class_='title').find('a')['href'].split('/')[4]
-                          }
-                         ) for x in range(1, pages + 1) for _list in BeautifulSoup(requests.get(
-                             'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term)).text,
-                'lxml').find_all(class_='col-xs-12 col-sm-4 cp_user_list_item')]
+            for x in range(1, pages + 1):
+                resp = requests.get(
+                    'https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist'.format(x, self.term))
+
+                soup = BeautifulSoup(resp.text, 'lxml')
+
+                if math.ceil(int(re.match(list_page_regex, str(next(iter(soup(text=re.compile(list_page_regex))))).strip()).group(1)) / 25) < x:
+                    raise StopIteration
+
+                yield [List({'type': _list.find(class_='list_type small').text.strip(),
+                             'title': _list.find(class_='title').text,
+                             'user': User(_list.find(class_='username').text, _list.find(class_='username')['href'].split('/')[4]) if not _list.find(class_='username muted') else _list.find(class_='username muted').text.strip(),
+                             'createdon': _list.find(class_='dataPair clearfix small list_created_date').find(class_='value').text,
+                             'itemcount': int(_list.find(class_='list_item_count').text.replace('items', '')),
+                             'description': _list.find(class_='description').text.replace('\n', ''),
+                             'id': _list.find(class_='title').find('a')['href'].split('/')[4]
+                             }) for _list in soup(class_='col-xs-12 col-sm-4 cp_user_list_item')]
 
     def __str__(self):
         return 'Search Type: {} Search Term {}'.format(self._type, self.term)
@@ -544,7 +559,7 @@ class AdvancedSearch:
     def __init__(self, exclusive=True, **kwargs):
         """
         Args:
-            exclusive(bool): Whether or not to include all results that match or any that match.
+            exclusive (bool): Whether or not to include all results that match or any that match.
             **kwargs: Search terms including one of 'include' or 'exclude' and one type such as 'keyword' or 'author'.
                       An example kwarg would be: includeauthor='J.K Rowling' or excludekeyword='Chamber'.
                       You can include multiple of the same type with includekeyword1='Chamber' and includekeyword2='Secrets'.
@@ -578,18 +593,33 @@ class AdvancedSearch:
             (' AND ' if exclusive else ' OR ').join(include), ' -' + '-'.join(exclude) if exclude else '')
 
     def getResults(self, pages=1):
-        """Gets the results of the search.
+        """Generator that yields a stream of results.
 
         Args:
             pages(int): Number of pages to get.
+
+        Yields:
+            list: A list of books on the page.
+
+        Examples:
+            >>> search = sfpl.AdvancedSearch(includeauthor='J. K. Rowling', excludekeyword='Harry Potter')
+            >>> stream = search.getResults(pages=2)
+            >>> next(stream)
+            [Fantastic Beasts and Where to Find Them by Rowling, J. K., Fantastic Beasts and Where to Find Them : The Original Screenplay by Rowling, J. K., The Casual Vacancy by Rowling, J. K., Very Good Lives by Rowling, J. K., Animales fantásticos y dónde encontrarlos by Rowling, J. K.]
         """
-        return [Book({'title': book.find('span').text,
-                      'author': book.find(class_='author-link').text,
-                      'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                      '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))})
-                for x in range(1, pages + 1) for book in BeautifulSoup(requests.get(
-                    "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=bl".format(x, self.query)).text,
-                'lxml').find_all(class_='cp-search-result-item-content')]
+        for x in range(1, pages + 1):
+            resp = requests.get(
+                "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=bl".format(x, self.query))
+
+            soup = BeautifulSoup(resp.text, 'lxml')
+
+            if math.ceil(int(re.match(book_page_regex, next(iter(soup(text=re.compile(book_page_regex))))).group(1)) / 10) < x:
+                raise StopIteration
+
+            yield [Book({'title': book.find('span').text,
+                         'author': book.find(class_='author-link').text,
+                         'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
+                         '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for book in soup(class_='cp-search-result-item-content')]
 
     def __str__(self):
         return self.query
@@ -632,7 +662,7 @@ class List:
                       'subtitle': book.find(class_='list_item_subtitle').text.strip() if book.find(class_='list_item_subtitle') else None,
                       '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))
                       }) for book in BeautifulSoup(requests.get('https://sfpl.bibliocommons.com/list/share/{}_{}/{}'.format(self.user._id, self.user.name, self._id)
-                                                                ).text, 'lxml').find_all(class_='listItem bg_white col-xs-12')]
+                                                                ).text, 'lxml')(class_='listItem bg_white col-xs-12')]
 
     def __str__(self):
         return self.title
@@ -702,7 +732,7 @@ class Branch:
         schedhule = BeautifulSoup(requests.get('https://sfpl.org/index.php?pg={}'.format(
             locations[self.name])).text, 'lxml')
 
-        return {k: v for (k, v) in zip([d.text for d in schedhule.find_all('abbr')], [h.text for h in schedhule.find_all('dd')[0:7]])}
+        return {k: v for (k, v) in zip([d.text for d in schedhule('abbr')], [h.text for h in schedhule('dd')[0:7]])}
 
     def __str__(self):
         return self.name

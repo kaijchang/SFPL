@@ -51,21 +51,22 @@ class TestScraper(unittest.TestCase):
         author = sfpl.Search('J.K. Rowling', _type='author')
         results = author.getResults()
 
-        for result in results:
+        for result in next(results):
             self.assertEqual(result.author, 'Rowling, J. K.')
 
     def test_pagination(self):
         author = sfpl.Search('J.K. Rowling', _type='author')
         results = author.getResults(pages=2)
 
-        self.assertEqual(len(results), 10)
+        self.assertEqual(len(next(results)), 5)
+        self.assertEqual(len(next(results)), 5)
 
     def test_book_search(self):
         search = sfpl.Search('Python')
 
         results = search.getResults()
 
-        for result in results:
+        for result in next(results):
             self.assertTrue('python' in result.title.lower())
 
     def test_list_search(self):
@@ -73,7 +74,7 @@ class TestScraper(unittest.TestCase):
 
         lists = search.getResults()
 
-        for list_ in lists:
+        for list_ in next(lists):
             self.assertTrue('red' in list_.title.lower())
 
     def test_user_search(self):
@@ -111,7 +112,7 @@ class TestScraper(unittest.TestCase):
 
         results = search.getResults()
 
-        for result in results:
+        for result in next(results):
             self.assertTrue('harry potter' not in result.title.lower())
 
     def test_advanced_search_error(self):

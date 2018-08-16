@@ -43,63 +43,49 @@ Or clone / download this repository and `$ python setup.py install` or `$ pip in
 Searching for books on Python:
 
 ```python
->>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
+>>> from sfpl import Search
 >>> python_search = Search('Python')
->>> results = python_search.getResults(pages=2) # You can specify how many pages of results to get (defaults to 1) 
->>> book = results[1] # Let's take a closer look at one of the books.
->>> print(book.getDetails()) # Get some more details on the book.
-{
-	'Publisher': '[Place of publication not identified] :, Mercury Learning, , 2017', 
-	'ISBN': ['9781944534653'], 
-	'Call Number': 'EBOOK BOOKS24x7', 
-	'Characteristics': '1 online resource (549 pages) : illustrations'
-}
->>> print(book.getDescription()) # Get a description of the book.
-'Following a practical, just-in-time presentation which gives students material as they need it ...'
+>>> results = python_search.getResults(pages=2) # .getResults is a generator that yields / streams pages of results
+>>> for page in results:
+		print(page)
+[Python by Donaldson, Toby, Python by Johansen, Andrew, Python! by Moses, Brian, Python by McGrath, Mike, Python by Vo. T. H, Phuong]
+[Python by Romano, Fabrizio, Python by Phillips, Dusty, Python by Joshi, Prateek, Python by Lassoff, Mark, Python by Wayani, Rafiq]
 ```
 
 Searching for books by J.K. Rowling:
 
 ```python
->>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
->>> jk_search = Search('J.K. Rowling', _type='author') # You can specify a search type (defaults to keyword)
+>>> from sfpl import Search
+>>> jk_search = Search('J.K. Rowling', _type='author')
 >>> results = jk_search.getResults()
->>> for book in results:
-		print(book.title)
+>>> first_page = next(results)
+>>> first_page[0].title
 "Harry Potter and the Sorcerer's Stone"
-'Harry Potter and the Prisoner of Azkaban'
-'Harry Potter and the Chamber of Secrets'
-'Harry Potter and the Cursed Child Parts One and Two'
-'Fantastic Beasts and Where to Find Them'
+>>> first_page[0].getDescription()
+"For the first time, J. K. Rowling's beloved Harry Potter ..."
 ```
 
 Searching for book lists related to San Francisco:
 
 ```python
->>> from sfpl import Search # Import the Search class, used for finding useful books or book lists.
+>>> from sfpl import Search
 >>> list_search = Search('San Francisco', _type='list')
 >>> results = list_search.getResults()
->>> _list = results[0] # Let's take a close look at one of these lists.
->>> print(_list.name, _list._type, _list.createdOn, _list.itemcount) # Print some of the list's attributes.
-'Made in SF - San Francisco love for young readers'   'Topic Guide'   'Oct 20, 2016'   18
->>> print(_list.user.name) # Print the name of the list creator.
-'SFPL_Kids'
->>> for book in _list.getBooks():
-		print(book.title)
-'Al Capone Does My Shirts'
-'Book Scavenger'
-'Discovering Mission San Francisco De Asis'
-'Larry Gets Lost in San Francisco'
-'Levi Strauss Gets A Bright Idea'
-'Me, Frida'
+>>> first_page = next(results)
+>>> first_page[0].title
+'Made in SF - San Francisco love for young readers'
+>>> for book in first_page[0].getBooks():
+		print(book)
+Al Capone Does My Shirts by Choldenko, Gennifer
+Book Scavenger by Bertman, Jennifer Chambliss
 ...
 ```
 
 Getting all your books on hold:
 
 ```python
->>> from sfpl import Account # Import the Account class, used for interacting with your library account.
->>> my_account = Account('barcode', 'pin') # Login with your barcode and pin.
+>>> from sfpl import Account
+>>> my_account = Account('barcode', 'pin') # Replace with your barcode and pin.
 >>> my_holds = my_account.getHolds()
 >>> for book in my_holds:
 		print(book.title)
@@ -118,7 +104,7 @@ Getting all your books on hold:
 Searching for books by J.K. Rowling but not about Harry Potter:
 
 ```python
->>> from sfpl import AdvancedSearch # Import the AdvancedSearch class
+>>> from sfpl import AdvancedSearch
 >>> search = AdvancedSearch(includeauthor='J.K. Rowling', excludekeyword='Harry Potter') # Search for books by J.K. Rowling but don't include 'Harry Potter'
 >>> results = search.getResults()
 >>> for book in results:
@@ -133,7 +119,7 @@ Searching for books by J.K. Rowling but not about Harry Potter:
 Getting hours for a library branch:
 
 ```python
->>> from sfpl import Branch # Import the Branch class, used for interacting with library branches.
+>>> from sfpl import Branch
 >>> branch = Branch('anza')
 >>> branch.getHours()
 {'Sun': '1 - 5', 'Mon': '12 - 6', 'Tue': '10 - 9', 'Wed': '1 - 9', 'Thu': '10 - 6', 'Fri': '1 - 6', 'Sat': '10 - 6'}
