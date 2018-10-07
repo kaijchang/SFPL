@@ -5,6 +5,7 @@ import requests
 
 import re
 import math
+import json
 
 from bs4 import BeautifulSoup
 from . import exceptions
@@ -12,8 +13,8 @@ from . import exceptions
 # Regex Patterns
 
 id_regex = 'https://sfpl.bibliocommons.com/.+/(\d+)'
-book_page_regex = '\d+ to \d+ of (\d+) groups'
-list_page_regex = '\d+ - \d+ of (\d+) items'
+book_page_regex = '[\d,]+ to [\d,]+ of ([\d,]+) results'
+list_page_regex = '[\d,]+ - [\d,]+ of ([\d,]+) items'
 
 
 class User:
@@ -460,6 +461,32 @@ class Book:
             jacket.write(requests.get(image_url if image_url.startswith(
                 'http') else 'https:{}'.format(image_url)).content)
 
+    @staticmethod
+    def metaDataIdToId(metaDataId):
+        """Converts a metadata ID to an ID contained in urls
+
+        Args:
+            metaDataId (str): The metadataId to convert.
+
+        Returns:
+            str: The ID contained in urls.
+        """
+
+        # var _id = id.split(/[SC]/g),
+        metaDataID = re.split('[SC]', metaDataId)
+
+        # sourceLibId = _id[1]
+        sourceLibId = metaDataID[1]
+
+        # var paddedSourceLibId = sourceLibId.padStart(3, '0');
+        paddedSourceLibId = (3 - len(sourceLibId)) * '0' + \
+            sourceLibId if len(sourceLibId) < 3 else sourceLibId
+
+        # bibId = _id[2];
+        bibId = metaDataID[2]
+
+        return bibId + paddedSourceLibId
+
     def __str__(self):
         return '{} by {}'.format(self.title, self.author) if self.author else self.title
 
@@ -513,13 +540,16 @@ class Search:
 
                 soup = BeautifulSoup(resp.text, 'lxml')
 
-                if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1)) / 10) < x:
+                if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1).replace(',', '')) / 10) < x:
                     raise StopIteration
 
-                yield [Book({'title': book.find('span').text,
-                             'author': book.find(class_='author-link').text if book.find(class_='author-link') else None,
-                             'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                             '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for book in soup(class_='cp-search-result-item-content')]
+                bib_data = json.loads(
+                    soup.find(type='application/json').text)['reduxStoreData']['entities']['bibs']
+
+                yield [Book({'title': bib_data[book]['briefInfo']['title'],
+                             'author': bib_data[book]['briefInfo']['authors'][0],
+                             'subtitle': bib_data[book]['briefInfo']['subtitle'],
+                             '_id': Book.metaDataIdToId(book)}) for book in bib_data]
 
         elif self._type == 'list':
             for x in range(1, pages + 1):
@@ -528,7 +558,7 @@ class Search:
 
                 soup = BeautifulSoup(resp.text, 'lxml')
 
-                if math.ceil(int(re.match(list_page_regex, str(soup.find(text=re.compile(list_page_regex))).strip()).group(1)) / 25) < x:
+                if math.ceil(int(re.match(list_page_regex, str(soup.find(text=re.compile(list_page_regex))).strip()).group(1).replace(',', '')) / 25) < x:
                     raise StopIteration
 
                 yield [List({'type': _list.find(class_='list_type small').text.strip(),
@@ -617,13 +647,16 @@ class AdvancedSearch:
 
             soup = BeautifulSoup(resp.text, 'lxml')
 
-            if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1)) / 10) < x:
+            if math.ceil(int(re.match(book_page_regex, soup.find(text=re.compile(book_page_regex))).group(1).replace(',', '')) / 10) < x:
                 raise StopIteration
 
-            yield [Book({'title': book.find('span').text,
-                         'author': book.find(class_='author-link').text,
-                         'subtitle': book.find(class_='cp-subtitle').text if book.find(class_='cp-subtitle') else None,
-                         '_id': int(''.join(s for s in book.find('a')['href'] if s.isdigit()))}) for book in soup(class_='cp-search-result-item-content')]
+            bib_data = json.loads(
+                    soup.find(type='application/json').text)['reduxStoreData']['entities']['bibs']
+
+            yield [Book({'title': bib_data[book]['briefInfo']['title'],
+                         'author': bib_data[book]['briefInfo']['authors'][0],
+                         'subtitle': bib_data[book]['briefInfo']['subtitle'],
+                         '_id': Book.metaDataIdToId(book)}) for book in bib_data]
 
     def __str__(self):
         return self.query
