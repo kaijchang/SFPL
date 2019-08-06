@@ -544,7 +544,7 @@ class Search:
                     raise StopIteration
 
                 bib_data = json.loads(
-                    soup.find(type='application/json').text)['reduxStoreData']['entities']['bibs']
+                    soup.find(type='application/json').text)['entities']['bibs']
 
                 yield [Book({'title': bib_data[book]['briefInfo']['title'],
                              'author': bib_data[book]['briefInfo']['authors'][0],
@@ -651,7 +651,7 @@ class AdvancedSearch:
                 raise StopIteration
 
             bib_data = json.loads(
-                    soup.find(type='application/json').text)['reduxStoreData']['entities']['bibs']
+                    soup.find(type='application/json').text)['entities']['bibs']
 
             yield [Book({'title': bib_data[book]['briefInfo']['title'],
                          'author': bib_data[book]['briefInfo']['authors'][0],

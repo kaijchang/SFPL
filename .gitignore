@@ -60,3 +60,5 @@ target/
 \.DS_Store
 
 \.pytest_cache/v/cache/
+
+.idea/
