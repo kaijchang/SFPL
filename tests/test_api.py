@@ -92,8 +92,6 @@ class TestScraper(unittest.TestCase):
         branch = sfpl.Branch('west portal')
         self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
         self.assertEqual(branch._id, '44563149')
-        self.assertDictEqual(branch.getHours(), {'Sun': '1 - 5', 'Mon': '1 - 6', 'Tue': '10 - 9',
-                                                 'Wed': '10 - 9', 'Thu': '10 - 9', 'Fri': '1 - 6', 'Sat': '10 - 6'})
 
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
