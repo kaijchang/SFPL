@@ -135,6 +135,7 @@ class TestScraper(unittest.TestCase):
             'potrero',
             'presidio',
             'richmond',
+            "richmond children's",
             'sunset',
             'visitacion valley',
             'west portal',
