@@ -755,7 +755,8 @@ class Branch:
         Returns:
             dict: A dictionary mapping days of the week to operating hours.
         """
-        branch = self.name.replace(' BRANCH', '').replace(' ', '-').lower()
+        branch = self.name + ' library' if self.name == 'MAIN' else self.name
+        branch = branch.replace(' BRANCH', '').replace(' ', '-').lower()
         response = requests.get(f'https://sfpl.org/locations/{branch}')
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'lxml')
