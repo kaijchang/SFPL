@@ -719,37 +719,41 @@ class Branch:
 
     Attributes:
         name (str): The name of the library branch.
+        _id (str): SFPL's ID for the library branch.
     """
-    BRANCHES = (
-        'anza',
-        'bayview',
-        'bernal heights',
-        'chinatown',
-        'eureka valley',
-        'excelsior',
-        'glen park',
-        'golden gate valley',
-        'ingleside',
-        'main library',
-        'marina',
-        'merced',
-        'mission',
-        'mission bay',
-        'noe valley',
-        'north beach',
-        'ocean view',
-        'ortega',
-        'park',
-        'parkside',
-        'portola',
-        'potrero',
-        'presidio',
-        'richmond',
-        'sunset',
-        'visitacion valley',
-        'west portal',
-        'western addition',
-    )
+    BRANCHES = {
+        'anza': '44563120',
+        'bayview': '44563121',
+        'bernal heights': '44563122',
+        'chinatown': '44563123',
+        "chinatown children's": '44563124',
+        'eureka valley': '44563125',
+        'excelsior': '44563126',
+        'glen park': '44563127',
+        'golden gate valley': '44563128',
+        'ingleside': '44563130',
+        'main library': '44563151',
+        'marina': '44563131',
+        'merced': '44563132',
+        'mission': '44563133',
+        'mission bay': '44563134',
+        'noe valley': '44563135',
+        'north beach': '44563136',
+        'ocean view': '44563137',
+        'ortega': '44563138',
+        'park': '44563139',
+        'parkside': '44563140',
+        'portola': '44563141',
+        'potrero': '44563142',
+        'presidio': '44563143',
+        'richmond': '44563144',
+        "richmond children's": '44563145',
+        'sunset': '44563146',
+        "sunset children's": '44563147',
+        'visitacion valley': '44563148',
+        'west portal': '44563149',
+        'western addition': '44563150',
+    }
 
     def __init__(self, name):
         """
@@ -762,6 +766,7 @@ class Branch:
         for branch in Branch.BRANCHES:
             if name.lower() in branch.lower():
                 self.name = branch
+                self._id = Branch.BRANCHES[self.name]
                 break
 
         else:
@@ -775,6 +780,7 @@ class Branch:
         """
         branch = (
             self.name
+                .replace(" children's", '')
                 .replace(' ', '-')
                 .lower()
         )
