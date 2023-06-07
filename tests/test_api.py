@@ -94,7 +94,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(branch._id, '44563149')
 
     def test_branch_hours(self):
-        "test branch hours"
+        'test branch hours'
         branch = sfpl.Branch('west portal')
         actual_hours = branch.getHours()
         expected_hours = {
@@ -107,6 +107,49 @@ class TestScraper(unittest.TestCase):
             'Sat': '10 - 6',
         }
         self.assertEqual(actual_hours, expected_hours)
+
+    def test_branch_hours_all(self):
+        'test branch hours on all branches approximately'
+        branches = (
+            'anza',
+            'bayview',
+            'bernal heights',
+            'chinatown',
+            'eureka valley',
+            'excelsior',
+            'glen park',
+            'golden gate valley',
+            'ingleside',
+            'main',
+            'marina',
+            'merced',
+            'mission',
+            'mission bay',
+            'noe valley',
+            'north beach',
+            'ocean view',
+            'ortega',
+            'park',
+            'parkside',
+            'portola',
+            'potrero',
+            'presidio',
+            'richmond',
+            'sunset',
+            'visitacion valley',
+            'west portal',
+            'western addition',
+        )
+
+        for branch_name in branches:
+            branch = sfpl.Branch(branch_name)
+            actual_hours = branch.getHours()
+            err_msg = f'Sun hours were incorrect for {branch_name}'
+
+            if branch_name == 'main':
+                self.assertEqual(actual_hours['Sun'], '12 - 6', err_msg)
+            else:
+                self.assertEqual(actual_hours['Sun'], '1 - 5', err_msg)
 
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
