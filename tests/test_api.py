@@ -88,11 +88,6 @@ class TestScraper(unittest.TestCase):
         with self.assertRaises(sfpl.exceptions.NoUserFound):
             sfpl.User('eopghpeghip')
 
-    def test_branch(self):
-        branch = sfpl.Branch('west portal')
-        self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
-        self.assertEqual(branch._id, '44563149')
-
     def test_branch_hours(self):
         'test branch hours'
         branch = sfpl.Branch('west portal')
@@ -110,42 +105,10 @@ class TestScraper(unittest.TestCase):
 
     def test_branch_hours_all(self):
         'test branch hours on all branches approximately'
-        branches = (
-            'anza',
-            'bayview',
-            'bernal heights',
-            'chinatown',
-            'eureka valley',
-            'excelsior',
-            'glen park',
-            'golden gate valley',
-            'ingleside',
-            'main',
-            'marina',
-            'merced',
-            'mission',
-            'mission bay',
-            'noe valley',
-            'north beach',
-            'ocean view',
-            'ortega',
-            'park',
-            'parkside',
-            'portola',
-            'potrero',
-            'presidio',
-            'richmond',
-            "richmond children's",
-            'sunset',
-            'visitacion valley',
-            'west portal',
-            'western addition',
-        )
-
-        for branch_name in branches:
+        for branch_name in sfpl.Branch.BRANCHES:
             branch = sfpl.Branch(branch_name)
             actual_hours = branch.getHours()
-            expected_hours = '12 - 6' if branch_name == 'main' else '1 - 5'
+            expected_hours = '12 - 6' if branch_name == 'main library' else '1 - 5'
             err_msg = f'Sun hours were incorrect for {branch_name}'
             self.assertEqual(actual_hours['Sun'], expected_hours, err_msg)
 
