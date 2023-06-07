@@ -145,12 +145,9 @@ class TestScraper(unittest.TestCase):
         for branch_name in branches:
             branch = sfpl.Branch(branch_name)
             actual_hours = branch.getHours()
+            expected_hours = '12 - 6' if branch_name == 'main' else '1 - 5'
             err_msg = f'Sun hours were incorrect for {branch_name}'
-
-            if branch_name == 'main':
-                self.assertEqual(actual_hours['Sun'], '12 - 6', err_msg)
-            else:
-                self.assertEqual(actual_hours['Sun'], '1 - 5', err_msg)
+            self.assertEqual(actual_hours['Sun'], expected_hours, err_msg)
 
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
