@@ -755,21 +755,18 @@ class Branch:
         Returns:
             dict: A dictionary mapping days of the week to operating hours.
         """
-        locations = {'ANZA BRANCH': '0100000301', 'BAYVIEW BRANCH': '0100000401', 'BERNAL HEIGHTS BRANCH': '0100002201',
-                     'CHINATOWN BRANCH': '0100000501', "CHINATOWN CHILDREN'S": '0100000501', 'EUREKA VALLEY BRANCH': '0100002301',
-                     'EXCELSIOR BRANCH': '0100000601', 'GLEN PARK BRANCH': '0100000701', 'GOLDEN GATE VALLEY BRANCH': '0100000801',
-                     'INGLESIDE BRANCH': '0100000901', 'MAIN': '0100000101', 'MARINA BRANCH': '0100001001',
-                     'MERCED BRANCH': '0100001101', 'MISSION': '0100000201', 'MISSION BAY BRANCH': '0100001201', 'NOE VALLEY': '0100001301',
-                     'NORTH BEACH BRANCH': '0100001401', 'OCEAN VIEW BRANCH': '0100001501', 'ORTEGA BRANCH': '0100001601',
-                     'PARK BRANCH': '0100001701', 'PARKSIDE BRANCH': '0100002401', 'PORTOLA BRANCH': '0100002701',
-                     'POTRERO BRANCH': '0100002501', 'PRESIDIO BRANCH': '0100002801', 'RICHMOND BRANCH': '0100002601',
-                     "RICHMOND CHILDREN'S": '0100002601', 'SUNSET BRANCH': '0100001801', "SUNSET CHILDREN'S": '0100001801',
-                     'VISITACION VALLEY BRANCH': '0100001901', 'WESTERN ADDITION BRANCH': '0100002101', 'WEST PORTAL BRANCH': '0100002001'}
+        branch = self.name.replace(' BRANCH', '').replace(' ', '-').lower()
+        response = requests.get(f'https://sfpl.org/locations/{branch}')
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'lxml')
+        result = {}
 
-        schedhule = BeautifulSoup(requests.get('https://sfpl.org/index.php?pg={}'.format(
-            locations[self.name])).text, 'lxml')
+        for day in soup.select('.office-hours__item'):
+            day_of_week = day.select_one('.office-hours__item-label').text.strip()
+            hours = day.select_one('.office-hours__item-slots').text.strip()
+            result[day_of_week] = hours
 
-        return {k: v for (k, v) in zip([d.text for d in schedhule('abbr')], [h.text for h in schedhule('dd')[0:7]])}
+        return result
 
     def __str__(self):
         return self.name

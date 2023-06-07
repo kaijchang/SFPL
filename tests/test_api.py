@@ -93,6 +93,21 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
         self.assertEqual(branch._id, '44563149')
 
+    def test_branch_hours(self):
+        "test branch hours"
+        branch = sfpl.Branch('west portal')
+        actual_hours = branch.getHours()
+        expected_hours = {
+            'Sun': '1 - 5',
+            'Mon': '1 - 6',
+            'Tue': '10 - 8',
+            'Wed': '10 - 8',
+            'Thu': '10 - 8',
+            'Fri': '1 - 6',
+            'Sat': '10 - 6',
+        }
+        self.assertEqual(actual_hours, expected_hours)
+
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
             sfpl.Branch('eighhegiohi;eg')
@@ -116,7 +131,6 @@ class TestScraper(unittest.TestCase):
 
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
             sfpl.AdvancedSearch(excludesomething='Harry Potter')
-
 
 if __name__ == '__main__':
     unittest.main()
