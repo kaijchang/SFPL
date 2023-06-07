@@ -88,10 +88,29 @@ class TestScraper(unittest.TestCase):
         with self.assertRaises(sfpl.exceptions.NoUserFound):
             sfpl.User('eopghpeghip')
 
-    def test_branch(self):
+    def test_branch_hours(self):
+        'test branch hours'
         branch = sfpl.Branch('west portal')
-        self.assertEqual(branch.name, 'WEST PORTAL BRANCH')
-        self.assertEqual(branch._id, '44563149')
+        actual_hours = branch.getHours()
+        expected_hours = {
+            'Sun': '1 - 5',
+            'Mon': '1 - 6',
+            'Tue': '10 - 8',
+            'Wed': '10 - 8',
+            'Thu': '10 - 8',
+            'Fri': '1 - 6',
+            'Sat': '10 - 6',
+        }
+        self.assertEqual(actual_hours, expected_hours)
+
+    def test_branch_hours_all(self):
+        'test branch hours on all branches approximately'
+        for branch_name in sfpl.Branch.BRANCHES:
+            branch = sfpl.Branch(branch_name)
+            actual_hours = branch.getHours()
+            expected_hours = '12 - 6' if branch_name == 'main library' else '1 - 5'
+            err_msg = f'Sun hours were incorrect for {branch_name}'
+            self.assertEqual(actual_hours['Sun'], expected_hours, err_msg)
 
     def test_branch_error(self):
         with self.assertRaises(sfpl.exceptions.NoBranchFound):
@@ -116,7 +135,6 @@ class TestScraper(unittest.TestCase):
 
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
             sfpl.AdvancedSearch(excludesomething='Harry Potter')
-
 
 if __name__ == '__main__':
     unittest.main()
