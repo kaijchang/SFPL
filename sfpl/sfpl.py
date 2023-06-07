@@ -755,7 +755,7 @@ class Branch:
         Returns:
             dict: A dictionary mapping days of the week to operating hours.
         """
-        branch = self.name + ' library' if self.name == 'MAIN' else self.name
+        branch = f'{self.name} library' if self.name == 'MAIN' else self.name
         branch = (
             branch
                 .replace(" CHILDREN'S", '')
