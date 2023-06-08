@@ -13,8 +13,8 @@ from . import exceptions
 # Regex Patterns
 
 id_regex = 'https://sfpl.bibliocommons.com/.+/(\d+)'
-book_page_regex = '[\d,]+ to [\d,]+ of ([\d,]+) results'
-list_page_regex = '[\d,]+ - [\d,]+ of ([\d,]+) items'
+book_page_regex = '[\d,]+ to [\d,]+ of ([\d,]+) results?'
+list_page_regex = '[\d,]+ - [\d,]+ of ([\d,]+) items?'
 
 
 class User:
@@ -535,21 +535,36 @@ class Search:
         """
         if self._type in ['keyword', 'title', 'author', 'subject', 'tag']:
             for x in range(1, pages + 1):
-                resp = requests.get('https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType={}'.format(
-                    x, '+'.join(self.term.split()), self._type))
-
+                query = '+'.join(self.term.split())
+                url = f'https://sfpl.bibliocommons.com/v2/search?page={x}&query={query}&searchType={self._type}'
+                resp = requests.get(url)
                 soup = BeautifulSoup(resp.text, 'lxml')
+                pages_element = soup.find(string=re.compile(book_page_regex))
 
-                if math.ceil(int(re.match(book_page_regex, soup.find(string=re.compile(book_page_regex))).group(1).replace(',', '')) / 10) < x:
+                if not pages_element:
+                    raise StopIteration
+
+                pages = re.match(book_page_regex, pages_element).group(1).replace(',', '')
+
+                if math.ceil(int(pages) / 10) < x:
                     raise StopIteration
 
                 bib_data = json.loads(
                     soup.find(type='application/json').text)['entities']['bibs']
 
-                yield [Book({'title': bib_data[book]['briefInfo']['title'],
-                             'author': bib_data[book]['briefInfo']['authors'][0],
-                             'subtitle': bib_data[book]['briefInfo']['subtitle'],
-                             '_id': Book.metaDataIdToId(book)}) for book in bib_data]
+                books = []
+
+                for book in bib_data:
+                    authors = bib_data[book]['briefInfo']['authors']
+                    b = Book({
+                        'title': bib_data[book]['briefInfo']['title'],
+                        'author': authors[0] if authors else None,
+                        'subtitle': bib_data[book]['briefInfo']['subtitle'],
+                        '_id': Book.metaDataIdToId(book),
+                    })
+                    books.append(b)
+
+                yield books
 
         elif self._type == 'list':
             for x in range(1, pages + 1):
@@ -643,20 +658,35 @@ class AdvancedSearch:
         """
         for x in range(1, pages + 1):
             resp = requests.get(
-                "https://sfpl.bibliocommons.com/v2/search?pagination_page={}&query={}&searchType=bl".format(x, self.query))
+                "https://sfpl.bibliocommons.com/v2/search?page={}&query={}&searchType=bl".format(x, self.query))
 
             soup = BeautifulSoup(resp.text, 'lxml')
+            pages_element = soup.find(string=re.compile(book_page_regex))
 
-            if math.ceil(int(re.match(book_page_regex, soup.find(string=re.compile(book_page_regex))).group(1).replace(',', '')) / 10) < x:
+            if not pages_element:
+                raise StopIteration
+
+            pages = re.match(book_page_regex, pages_element).group(1).replace(',', '')
+
+            if math.ceil(int(pages) / 10) < x:
                 raise StopIteration
 
             bib_data = json.loads(
                     soup.find(type='application/json').text)['entities']['bibs']
 
-            yield [Book({'title': bib_data[book]['briefInfo']['title'],
-                         'author': bib_data[book]['briefInfo']['authors'][0],
-                         'subtitle': bib_data[book]['briefInfo']['subtitle'],
-                         '_id': Book.metaDataIdToId(book)}) for book in bib_data]
+            books = []
+
+            for book in bib_data:
+                authors = bib_data[book]['briefInfo']['authors']
+                b = Book({
+                    'title': bib_data[book]['briefInfo']['title'],
+                    'author': authors[0] if authors else None,
+                    'subtitle': bib_data[book]['briefInfo']['subtitle'],
+                    '_id': Book.metaDataIdToId(book),
+                })
+                books.append(b)
+
+            yield books
 
     def __str__(self):
         return self.query

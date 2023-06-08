@@ -55,11 +55,13 @@ class TestScraper(unittest.TestCase):
             self.assertTrue('Rowling, J. K' in result.author)
 
     def test_pagination(self):
+        'test pagination'
         author = sfpl.Search('J.K. Rowling', _type='author')
         results = author.getResults(pages=2)
 
-        next(results)
-        next(results)
+        page_one = next(results)
+        page_two = next(results)
+        self.assertNotEqual(page_one, page_two)
 
     def test_book_search(self):
         search = sfpl.Search('Python')
@@ -68,6 +70,16 @@ class TestScraper(unittest.TestCase):
 
         for result in next(results):
             self.assertTrue('python' in result.title.lower())
+
+    def test_book_search_with_zero_results(self):
+        'test book search with zero results'
+        search = sfpl.Search('qwteyut_does_not_exist')
+        self.assertRaises(RuntimeError, lambda: next(search.getResults()))
+
+    def test_book_search_with_one_result(self):
+        'test book search with one result'
+        search = sfpl.Search('Everything Keeps Dissolving')
+        self.assertEqual(len(list(search.getResults())), 1)
 
     def test_list_search(self):
         search = sfpl.Search('red', _type='list')
@@ -129,6 +141,11 @@ class TestScraper(unittest.TestCase):
         for result in next(results):
             self.assertTrue('harry potter' not in result.title.lower())
 
+    def test_advanced_search_with_zero_results(self):
+        'test advanced search with zero results'
+        search = sfpl.AdvancedSearch(includeauthor='asdafa_does_not_exist')
+        self.assertRaises(RuntimeError, lambda: next(search.getResults()))
+
     def test_advanced_search_error(self):
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
             sfpl.AdvancedSearch(soemthingkeyword='Harry Potter')
@@ -137,4 +154,4 @@ class TestScraper(unittest.TestCase):
             sfpl.AdvancedSearch(excludesomething='Harry Potter')
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
