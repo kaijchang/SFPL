@@ -12,9 +12,9 @@ from . import exceptions
 
 # Regex Patterns
 
-id_regex = 'https://sfpl.bibliocommons.com/.+/(\d+)'
-book_page_regex = '[\d,]+ to [\d,]+ of ([\d,]+) results?'
-list_page_regex = '[\d,]+ - [\d,]+ of ([\d,]+) items?'
+id_regex = r'https://sfpl.bibliocommons.com/.+/(\d+)'
+book_page_regex = r'[\d,]+ to [\d,]+ of ([\d,]+) results?'
+list_page_regex = r'[\d,]+ - [\d,]+ of ([\d,]+) items?'
 
 
 class User:
