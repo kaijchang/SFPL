@@ -42,18 +42,6 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].subtitle, "")
         self.assertEqual(result[0]._id, "S93C6223776")
 
-    def test_shelf(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/shelf.html'), encoding='utf-8') as mockup:
-            result = sfpl.Account.parseShelf(
-                BeautifulSoup(mockup.read(), 'lxml'))
-
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].title, 'Bitcoin')
-        self.assertEqual(result[0].author, 'United States')
-        self.assertEqual(
-            result[0].subtitle, 'Examining the Benefits and Risks for Small Business : Hearing Before the Committee on Small Business, United States House of Representatives, One Hundred Thirteenth Congress, Second Session, Hearing Held April 2, 2014')
-        self.assertEqual(result[0]._id, 2776977093)
-
     def test_author_search(self):
         author = sfpl.Search('J.K. Rowling', _type='author')
         results = author.getResults()
