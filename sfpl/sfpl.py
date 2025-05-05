@@ -87,40 +87,40 @@ class User:
                       }) for _list in BeautifulSoup(requests.get(
                           'https://sfpl.bibliocommons.com/lists/show/{}'.format(self._id)).text, 'lxml').find('tbody')('tr')]
 
-    def getForLater(self):
-        """Get's user's for later shelf.
+    # def getForLater(self):
+    #     """Get's user's for later shelf.
 
-        Returns:
-            list: A list of Book objects.
-        """
-        return self.parseShelf(BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/collection/show/{}/library/for_later'.format(self._id)).text, 'lxml'))
+    #     Returns:
+    #         list: A list of Book objects.
+    #     """
+    #     return self.parseShelf(BeautifulSoup(requests.get(
+    #         'https://sfpl.bibliocommons.com/collection/show/{}/library/for_later'.format(self._id)).text, 'lxml'))
 
-    def getInProgress(self):
-        """Get's user's in progress shelf.
+    # def getInProgress(self):
+    #     """Get's user's in progress shelf.
 
-        Returns:
-            list: A list of Book objects.
-        """
-        return self.parseShelf(BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/collection/{}/my/library/in_progress'.format(self._id)).text, 'lxml'))
+    #     Returns:
+    #         list: A list of Book objects.
+    #     """
+    #     return self.parseShelf(BeautifulSoup(requests.get(
+    #         'https://sfpl.bibliocommons.com/collection/{}/my/library/in_progress'.format(self._id)).text, 'lxml'))
 
-    def getCompleted(self):
-        """Get's user's completed shelf.
+    # def getCompleted(self):
+    #     """Get's user's completed shelf.
 
-        Returns:
-            list: A list of Book objects.
-        """
-        return self.parseShelf(BeautifulSoup(requests.get(
-            'https://sfpl.bibliocommons.com/collection/show/{}/library/completed'.format(self._id)).text, 'lxml'))
+    #     Returns:
+    #         list: A list of Book objects.
+    #     """
+    #     return self.parseShelf(BeautifulSoup(requests.get(
+    #         'https://sfpl.bibliocommons.com/collection/show/{}/library/completed'.format(self._id)).text, 'lxml'))
 
-    @staticmethod
-    def parseShelf(response):
-        return [Book({'title': book.find(testid='bib_link').text,
-                      'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                      'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                      '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
-                for book in response('div', lambda value: value and value.startswith('listItem clearfix'))]
+    # @staticmethod
+    # def parseShelf(response):
+    #     return [Book({'title': book.find(testid='bib_link').text,
+    #                   'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
+    #                   'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
+    #                   '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))})
+    #             for book in response('div', lambda value: value and value.startswith('listItem clearfix'))]
 
     def __str__(self):
         return self.name
