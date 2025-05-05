@@ -11,29 +11,36 @@ import sfpl
 
 class TestScraper(unittest.TestCase):
     def test_holds(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/holds.html'), encoding='utf-8') as mockup:
-            result = sfpl.Account.parseHolds(
-                BeautifulSoup(mockup.read(), 'lxml'))
+        with codecs.open(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "assets/holds.html"
+            ),
+            encoding="utf-8",
+        ) as mockup:
+            result = sfpl.Account.parseHolds(mockup.read())
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].title, 'Fundamentals of Deep Learning')
-        self.assertEqual(result[0].author, 'Buduma, Nikhil')
-        self.assertEqual(result[0].status, 'Pickup by:  Jun 18, 2018')
-        self.assertEqual(
-            result[0].subtitle, 'Designing Next-generation Machine Intelligence Algorithms')
-        self.assertEqual(result[0]._id, 3388519093)
+        self.assertEqual(len(result), 8)
+        self.assertEqual(result[0].title, "War on Gaza")
+        self.assertEqual(result[0].author, "Sacco, Joe")
+        self.assertEqual(result[0].status, "IN_TRANSIT: IN TRANSIT")
+        self.assertEqual(result[0].subtitle, "")
+        self.assertEqual(result[0]._id, "S93C7165420")
 
     def test_checkouts(self):
-        with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/checkouts.html'), encoding='utf-8') as mockup:
-            result = sfpl.Account.parseCheckouts(
-                BeautifulSoup(mockup.read(), 'lxml'))
+        with codecs.open(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "assets/checkouts.html"
+            ),
+            encoding="utf-8",
+        ) as mockup:
+            result = sfpl.Account.parseCheckouts(mockup.read())
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].title, 'Basics of Web Design')
-        self.assertEqual(result[0].author, 'Felke-Morris, Terry')
-        self.assertEqual(result[0].status, 'Due Jun 28, 2018')
-        self.assertEqual(result[0].subtitle, 'HTML5 & CSS3')
-        self.assertEqual(result[0]._id, 2423174093)
+        self.assertEqual(len(result), 9)
+        self.assertEqual(result[0].title, "The Children of the Dead")
+        self.assertEqual(result[0].author, "Jelinek, Elfriede")
+        self.assertEqual(result[0].status, "Due 2025-05-16")
+        self.assertEqual(result[0].subtitle, "")
+        self.assertEqual(result[0]._id, "S93C6223776")
 
     def test_shelf(self):
         with codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets/shelf.html'), encoding='utf-8') as mockup:

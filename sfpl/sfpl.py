@@ -321,69 +321,78 @@ class Account(User):
         if not resp.json()['logged_in']:
             raise exceptions.NotLoggedIn
 
-    def getCheckouts(self):
+    def getCheckouts(self) -> list["Book"]:
         """Gets the user's checked out items.
-
         Returns:
             list: A list of Book objects.
         """
-        resp = self.session.get(
-            'https://sfpl.bibliocommons.com/checkedout')
+        resp = self.session.get("https://sfpl.bibliocommons.com/checkedout")
 
-        if resp.history:
-            raise exceptions.NotLoggedIn
+        return self.parseCheckouts(resp.text)
 
-        return self.parseCheckouts(BeautifulSoup(resp.text, 'lxml'))
-
-    def getHolds(self):
+    def getHolds(self) -> list["Book"]:
         """Gets the user's held items.
-
         Returns:
             list: A list of Book objects.
         """
         resp = self.session.get(
-            'https://sfpl.bibliocommons.com/holds/index/not_yet_available')
+            "https://sfpl.bibliocommons.com/holds/index/not_yet_available"
+        )
 
-        if resp.history:
+        return self.parseHolds(resp.text)
+
+    @staticmethod
+    def parseCheckouts(response_text: str) -> list["Book"]:
+        data = Account.__extract_data(response_text)
+
+        bibs = data["entities"]["bibs"].values()
+        checkouts = {b["metadataId"]: b for b in data["entities"]["checkouts"].values()}
+
+        # TODO: determine a reasonable status string spec.
+        def parseStatus(id: str) -> str:
+            return "Due {}".format(checkouts[id]["dueDate"])
+
+        return [
+            Book(Account._parseDataDict(b), status=parseStatus(b["id"])) for b in bibs
+        ]
+
+    @staticmethod
+    def parseHolds(response_text: str) -> list["Book"]:
+        data = Account.__extract_data(response_text)
+
+        bibs = data["entities"]["bibs"].values()
+        holds = {b["metadataId"]: b for b in data["entities"]["holds"].values()}
+
+        # TODO: determine a reasonable status string spec.
+        def parseStatus(id: str) -> str:
+            status = holds[id]["status"]
+            if holds[id].get("holdText"):
+                status = "{}: {}".format(status, holds[id]["holdText"])
+            return status
+
+        return [
+            Book(Account._parseDataDict(b), status=parseStatus(b["id"])) for b in bibs
+        ]
+    
+    @staticmethod
+    def _parseDataDict(bib: dict) -> dict[str, str]:
+        return {
+            "title": bib["briefInfo"]["title"],
+            "subtitle": bib["briefInfo"]["subtitle"],
+            "author": " & ".join(bib["briefInfo"]["authors"]),
+            "_id": bib["id"],
+        }
+
+    @staticmethod
+    def __extract_data(response_text: str) -> dict:
+        soup = BeautifulSoup(response_text, "html.parser")
+        script_tag = soup.find(
+            "script", {"type": "application/json", "data-iso-key": "_0"}
+        )
+        if not script_tag:
             raise exceptions.NotLoggedIn
 
-        return self.parseHolds(BeautifulSoup(resp.text, 'lxml'))
-
-    @staticmethod
-    def parseCheckouts(response):
-        return [Book({'title': book.find(class_='title title_extended').text,
-                      'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                      'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                      '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))},
-                     status="Due {}".format(book(class_='checkedout_status out')[1].text.replace('\xa0', '')) if len(book(class_='checkedout_status out')) == 2 else (book.find(class_='checkedout_status overdue').text.strip() if book.find(class_='checkedout_status overdue') else book.find(class_='checkedout_status coming_due').text.strip()))
-                for book in response('div', lambda class_: class_ and class_.startswith('listItem'))]
-
-    @staticmethod
-    def parseHolds(response):
-        books = response(
-            'div', lambda class_: class_ and class_.startswith('listItem'))
-
-        book_data = []
-
-        for book in books:
-            if book.find(class_='hold_status in_transit'):
-                location = book.find(class_='pick_up_location')
-                location.span.clear()
-                status = 'In Transit to {}'.format(location.text.strip())
-
-            elif book.find(class_='pick_up_date'):
-                status = book.find(
-                    class_='pick_up_date').text.strip()
-
-            else:
-                status = book.find(
-                    class_='hold_position').text.strip()
-
-            book_data.append(Book({'title': book.find(testid='bib_link').text,
-                                   'author': book.find(testid='author_search').text if book.find(testid='author_search') else None,
-                                   'subtitle': book.find(class_='subTitle').text if book.find(class_='subTitle') else None,
-                                   '_id': int(''.join(s for s in book.find(testid='bib_link')['href'] if s.isdigit()))}, status=status))
-        return book_data
+        return json.loads(script_tag.text)
 
     def loggedIn(self):
         return not bool(self.session.get('https://sfpl.bibliocommons.com/user_dashboard').history)
@@ -400,7 +409,7 @@ class Book:
         title (str): The title of the book.
         author (sre): The book's author's name.
         subtitle (str): The subtitle of the book.
-        _id (int): SFPL's _id for the book.
+        _id (str): SFPL's _id for the book.
         status (str): The book's status, if applicable. (e.g. duedate, hold position)
     """
 
