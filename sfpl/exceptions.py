@@ -74,6 +74,12 @@ class MissingFilterTerm(Exception):
         )
 
 
+class MissingScriptError(Exception):
+    """Raised when the data script is missing from the page."""
+
+    pass
+
+
 class NotLoggedIn(Exception):
     """Raised when an authentication token is rejected."""
 

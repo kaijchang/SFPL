@@ -17,6 +17,17 @@ book_page_regex = r"[\d,]+ to [\d,]+ of ([\d,]+) results?"
 list_page_regex = r"[\d,]+ - [\d,]+ of ([\d,]+) items?"
 
 
+def _extract_data(response_text: str) -> dict:
+    soup = BeautifulSoup(response_text, "lxml")
+    script_tag = soup.find(
+        "script", {"type": "application/json", "data-iso-key": "_0"}
+    )
+    if not script_tag:
+        raise exceptions.MissingScriptError
+
+    return json.loads(script_tag.text)
+
+
 class User:
     """A library user account.
 
@@ -476,19 +487,15 @@ class Account(User):
             "title": bib["briefInfo"]["title"],
             "subtitle": bib["briefInfo"]["subtitle"],
             "author": " & ".join(bib["briefInfo"]["authors"]),
-            "_id": bib["id"].replace("S93C", "") + "093",
+            "_id": Book.metaDataIdToId(bib["id"]),
         }
 
     @staticmethod
     def __extract_data(response_text: str) -> dict:
-        soup = BeautifulSoup(response_text, "html.parser")
-        script_tag = soup.find(
-            "script", {"type": "application/json", "data-iso-key": "_0"}
-        )
-        if not script_tag:
+        try:
+            return _extract_data(response_text)
+        except exceptions.MissingScriptError:
             raise exceptions.NotLoggedIn
-
-        return json.loads(script_tag.text)
 
     def loggedIn(self):
         return not bool(
@@ -505,9 +512,9 @@ class Book:
 
     Attributes:
         title (str): The title of the book.
-        author (sre): The book's author's name.
+        author (str): The book's author's name.
         subtitle (str): The subtitle of the book.
-        _id (str): SFPL's _id for the book.
+        _id (str): SFPL's id for the book.
         status (str): The book's status, if applicable. (e.g. duedate, hold position)
     """
 
@@ -519,103 +526,19 @@ class Book:
 
         self.status = status
 
-    def getDescription(self):
-        """Get the book's description.
-
-        Returns:
-            str: Book description.
-        """
-        return (
-            BeautifulSoup(
-                requests.get(
-                    "https://sfpl.bibliocommons.com/item/show/{}".format(self._id)
-                ).text,
-                "lxml",
-            )
-            .find(class_="bib_description")
-            .text.strip()
-        )
-
     def getDetails(self):
-        """Get's the book's details.
+        """Get the book's details.
 
         Returns:
-            dict: A dictionary with additional data like Publisher, Edition and ISBN.
+            dict: Book details.
         """
-        book_page = BeautifulSoup(
-            requests.get(
-                "https://sfpl.bibliocommons.com/item/show/{}".format(self._id)
-            ).text,
-            "lxml",
-        )
-
-        return {
-            k: v
-            for (k, v) in zip(
-                [d.text.replace(":", "") for d in book_page(class_="label")],
-                [
-                    d.text.strip().split()
-                    if book_page(class_="label")[
-                        book_page(class_="value").index(d)
-                    ].text
-                    == "ISBN:"
-                    else (
-                        [t.strip() for t in d.text.split("\n") if t]
-                        if book_page(class_="label")[
-                            book_page(class_="value").index(d)
-                        ].text
-                        == "Additional Contributors:"
-                        else " ".join(d.text.split())
-                    )
-                    for d in book_page(class_="value")
-                ],
-            )
-        }
-
-    def getKeywords(self):
-        """Get the book's keywords.
-
-        Returns:
-            list: A list of terms contained in the book.
-        """
-        book_page = BeautifulSoup(
-            requests.get(
-                "https://sfpl.bibliocommons.com/item/show/{}?active_tab=bib_info".format(
-                    self._id
-                )
-            ).text,
-            "lxml",
-        )
-
         return (
-            book_page.find(class_="dataPair clearfix contents")
-            .find(class_="value")
-            .get_text("\n")
-            .split("\n")
-            if book_page.find(class_="dataPair clearfix contents")
-            else []
-        )
-
-    def downloadJacket(self, filename):
-        """Downloads the book's jacket image.
-
-        Args:
-            filename (str): The name of the file to save the image to.
-        """
-        with open("{}.png".format(filename), "wb") as jacket:
-            image_url = BeautifulSoup(
+            list(_extract_data(
                 requests.get(
                     "https://sfpl.bibliocommons.com/item/show/{}".format(self._id)
                 ).text,
-                "lxml",
-            ).find(class_="jacketCover bib_detail")["src"]
-            jacket.write(
-                requests.get(
-                    image_url
-                    if image_url.startswith("http")
-                    else "https:{}".format(image_url)
-                ).content
-            )
+            )["entities"]["catalogBibs"].values())[0]
+        )
 
     @staticmethod
     def metaDataIdToId(metaDataId):
