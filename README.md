@@ -3,7 +3,8 @@
 Python Package for accessing account, book, and author data from the SFPL Website.
 
 ## Status
-![travis](https://travis-ci.org/kajchang/SFPL.svg?branch=master)
+[![python-test](https://github.com/kaijchang/SFPL/actions/workflows/python-package.yml/badge.svg)](https://github.com/kaijchang/SFPL/actions/workflows/python-package.yml)
+[![static-analysis](https://github.com/kaijchang/SFPL/actions/workflows/static-analysis.yaml/badge.svg)](https://github.com/kaijchang/SFPL/actions/workflows/static-analysis.yaml)
 [![pypi](https://badge.fury.io/py/sfpl.svg)](https://pypi.org/project/sfpl/)
 
 ## Installation

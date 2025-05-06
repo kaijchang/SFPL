@@ -19,9 +19,7 @@ list_page_regex = r"[\d,]+ - [\d,]+ of ([\d,]+) items?"
 
 def _extract_data(response_text: str) -> dict:
     soup = BeautifulSoup(response_text, "lxml")
-    script_tag = soup.find(
-        "script", {"type": "application/json", "data-iso-key": "_0"}
-    )
+    script_tag = soup.find("script", {"type": "application/json", "data-iso-key": "_0"})
     if not script_tag:
         raise exceptions.MissingScriptError
 
@@ -532,13 +530,13 @@ class Book:
         Returns:
             dict: Book details.
         """
-        return (
-            list(_extract_data(
+        return list(
+            _extract_data(
                 requests.get(
                     "https://sfpl.bibliocommons.com/item/show/{}".format(self._id)
                 ).text,
-            )["entities"]["catalogBibs"].values())[0]
-        )
+            )["entities"]["catalogBibs"].values()
+        )[0]
 
     @staticmethod
     def metaDataIdToId(metaDataId):
