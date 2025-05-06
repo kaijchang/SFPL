@@ -5,7 +5,6 @@ import unittest
 import os
 import codecs
 
-from bs4 import BeautifulSoup
 import sfpl
 
 
@@ -24,7 +23,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].author, "Sacco, Joe")
         self.assertEqual(result[0].status, "IN_TRANSIT: IN TRANSIT")
         self.assertEqual(result[0].subtitle, "")
-        self.assertEqual(result[0]._id, "S93C7165420")
+        self.assertEqual(result[0]._id, "7165420093")
 
     def test_checkouts(self):
         with codecs.open(
@@ -40,7 +39,7 @@ class TestScraper(unittest.TestCase):
         self.assertEqual(result[0].author, "Jelinek, Elfriede")
         self.assertEqual(result[0].status, "Due 2025-05-16")
         self.assertEqual(result[0].subtitle, "")
-        self.assertEqual(result[0]._id, "S93C6223776")
+        self.assertEqual(result[0]._id, "6223776093")
 
     def test_author_search(self):
         author = sfpl.Search("J.K. Rowling", _type="author")
