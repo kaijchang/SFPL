@@ -6,6 +6,7 @@ import requests
 import re
 import math
 import json
+from typing import Generator
 
 from bs4 import BeautifulSoup
 from . import exceptions
@@ -604,7 +605,7 @@ class Search:
         else:
             raise exceptions.InvalidSearchType(_type.lower())
 
-    def getResults(self, pages=1):
+    def getResults(self, pages=1) -> Generator[list["Book"], None, None]:
         """Gets the results of the search.
 
         Args:

@@ -59,11 +59,11 @@ Searching for books by J.K. Rowling:
 >>> from sfpl import Search
 >>> jk_search = Search('J.K. Rowling', _type='author')
 >>> results = jk_search.getResults()
->>> first_page = next(results)
+>>> first_page = next(results).getBooks()
 >>> first_page[0].title
-"Harry Potter and the Sorcerer's Stone"
->>> first_page[0].getDescription()
-"For the first time, J. K. Rowling's beloved Harry Potter ..."
+"Harry Potter and the Deathly Hallows"
+>>> first_page[0].getDetails()["brief"]["description"]
+"Harry discovers what fate truly has in store for him as he inevitably makes his way to the final meeting with Voldemort. Book #7"
 ```
 
 Searching for book lists related to San Francisco:
