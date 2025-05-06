@@ -476,7 +476,7 @@ class Account(User):
             "title": bib["briefInfo"]["title"],
             "subtitle": bib["briefInfo"]["subtitle"],
             "author": " & ".join(bib["briefInfo"]["authors"]),
-            "_id": bib["id"],
+            "_id": bib["id"].replace("S93C", "") + "093",
         }
 
     @staticmethod
