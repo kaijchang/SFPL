@@ -8,5 +8,4 @@ With this module, you can check your holds and checked out books, as well as req
 Additionally, you can get the operating times of different SFPL library branches.
 """
 
-
 from .sfpl import Account, Search, User, Branch, AdvancedSearch
