@@ -84,7 +84,7 @@ class TestScraper(unittest.TestCase):
             self.assertTrue("red" in list_.title.lower())
 
     def test_user_search(self):
-        user = sfpl.User("Sublurbanite")
+        user = sfpl.User("SFPL_ReadersAdvisory")
 
         user.getFollowers()
         user.getFollowing()
