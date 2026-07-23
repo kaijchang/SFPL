@@ -143,7 +143,8 @@ Search books or media by keyword, title, author, subject, or tag:
 ```console
 $ sfpl search "J.K. Rowling" --type author --pages 2
 $ sfpl search "climate fiction" --type subject
-$ sfpl search "music" --format LP --sort newly_acquired
+$ sfpl search "music" --format LP --sort newly_acquired --on-order
+$ sfpl search "music" --format LP --no-on-order
 ```
 
 Use `--type list` to search user-created lists:

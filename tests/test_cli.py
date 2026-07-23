@@ -81,7 +81,7 @@ class CLITest(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(stderr, "")
-        search_class.assert_called_once_with("python", _type="title", format=None, sort=None)
+        search_class.assert_called_once_with("python", _type="title", format=None, sort=None, on_order=None)
         search_class.return_value.getResults.assert_called_once_with(pages=2)
         self.assertEqual(
             stdout,
@@ -93,13 +93,13 @@ class CLITest(unittest.TestCase):
         search_class.return_value.getResults.return_value = iter([[book("Album")]])
 
         status, stdout, stderr = self.invoke(
-            ["search", "music", "--format", "LP", "--sort", "newly_acquired"]
+            ["search", "music", "--format", "LP", "--sort", "newly_acquired", "--on-order"]
         )
 
         self.assertEqual(status, 0)
         self.assertEqual(stderr, "")
         search_class.assert_called_once_with(
-            "music", _type="keyword", format="LP", sort="newly_acquired"
+            "music", _type="keyword", format="LP", sort="newly_acquired", on_order=True
         )
         self.assertEqual(stdout, "Album — Author\n")
 
@@ -176,6 +176,7 @@ class CLITest(unittest.TestCase):
             exclusive=False,
             format=None,
             sort=None,
+            on_order=None,
             includeauthor="J. K. Rowling",
             includekeyword="magic",
             excludetitle="Harry Potter",
@@ -204,6 +205,7 @@ class CLITest(unittest.TestCase):
             exclusive=True,
             format="LP",
             sort="newly_acquired",
+            on_order=None,
             includeauthor="Miles Davis",
         )
 
