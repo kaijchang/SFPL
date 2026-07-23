@@ -81,12 +81,27 @@ class CLITest(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(stderr, "")
-        search_class.assert_called_once_with("python", _type="title")
+        search_class.assert_called_once_with("python", _type="title", format=None, sort=None)
         search_class.return_value.getResults.assert_called_once_with(pages=2)
         self.assertEqual(
             stdout,
             "First — Author\nSecond — Author (Due tomorrow)\n",
         )
+
+    @mock.patch("sfpl.cli.Search")
+    def test_search_with_format_and_sort(self, search_class):
+        search_class.return_value.getResults.return_value = iter([[book("Album")]])
+
+        status, stdout, stderr = self.invoke(
+            ["search", "music", "--format", "LP", "--sort", "newly_acquired"]
+        )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        search_class.assert_called_once_with(
+            "music", _type="keyword", format="LP", sort="newly_acquired"
+        )
+        self.assertEqual(stdout, "Album — Author\n")
 
     @mock.patch("sfpl.cli.Search")
     def test_search_with_no_results_succeeds(self, search_class):
@@ -159,11 +174,38 @@ class CLITest(unittest.TestCase):
         self.assertEqual(stderr, "")
         search_class.assert_called_once_with(
             exclusive=False,
+            format=None,
+            sort=None,
             includeauthor="J. K. Rowling",
             includekeyword="magic",
             excludetitle="Harry Potter",
         )
         search_class.return_value.getResults.assert_called_once_with(pages=2)
+
+    @mock.patch("sfpl.cli.AdvancedSearch")
+    def test_advanced_search_with_format_and_sort(self, search_class):
+        search_class.return_value.getResults.return_value = iter([[book()]])
+
+        status, _, stderr = self.invoke(
+            [
+                "advanced-search",
+                "--include",
+                "author=Miles Davis",
+                "--format",
+                "LP",
+                "--sort",
+                "newly_acquired",
+            ]
+        )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        search_class.assert_called_once_with(
+            exclusive=True,
+            format="LP",
+            sort="newly_acquired",
+            includeauthor="Miles Davis",
+        )
 
     def test_advanced_search_rejects_duplicate_field(self):
         status, _, stderr = self.invoke(
