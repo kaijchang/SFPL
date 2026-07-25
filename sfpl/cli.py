@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
 """Command-line interface for the :mod:`sfpl` package."""
-
 
 import argparse
 import getpass
@@ -12,7 +9,6 @@ import requests
 
 from . import exceptions
 from .sfpl import Account, AdvancedSearch, Book, Branch, List, Search
-
 
 ADVANCED_FIELDS = (
     "keyword",
@@ -67,9 +63,7 @@ def build_parser():
         default="keyword",
         dest="search_type",
         metavar="TYPE",
-        help="search field: {} (default: keyword)".format(
-            ", ".join(SEARCH_TYPES)
-        ),
+        help="search field: {} (default: keyword)".format(", ".join(SEARCH_TYPES)),
     )
     search.add_argument(
         "--pages",
@@ -127,8 +121,7 @@ def build_parser():
     holds = account_commands.add_parser("holds", help="show current holds")
     _add_account_options(holds)
     holds.set_defaults(handler=_run_account)
-    checkouts = account_commands.add_parser(
-        "checkouts", help="show current checkouts")
+    checkouts = account_commands.add_parser("checkouts", help="show current checkouts")
     _add_account_options(checkouts)
     checkouts.set_defaults(handler=_run_account)
 
@@ -137,13 +130,8 @@ def build_parser():
 
 def _collect_results(result_pages):
     results = []
-    try:
-        for page in result_pages:
-            results.extend(page)
-    except RuntimeError as exc:
-        if isinstance(exc.__cause__, StopIteration):
-            return results
-        raise
+    for page in result_pages:
+        results.extend(page)
     return results
 
 
@@ -162,14 +150,12 @@ def _parse_filters(values, operation):
         if not separator or field not in ADVANCED_FIELDS or not term:
             valid = ", ".join(ADVANCED_FIELDS)
             raise CLIError(
-                "invalid {} filter {!r}; expected FIELD=TERM where "
-                "FIELD is one of {}".format(operation, value, valid)
+                f"invalid {operation} filter {value!r}; expected FIELD=TERM where "
+                f"FIELD is one of {valid}"
             )
-        key = "{}{}".format(operation, field)
+        key = f"{operation}{field}"
         if key in filters:
-            raise CLIError(
-                "duplicate {} filter for field {!r}".format(operation, field)
-            )
+            raise CLIError(f"duplicate {operation} filter for field {field!r}")
         filters[key] = term
     return filters
 
@@ -203,8 +189,7 @@ def _account_credentials(args, environ, input_stream):
     if not pin and input_stream.isatty():
         pin = getpass.getpass("SFPL PIN: ", stream=sys.stderr)
     if not pin:
-        raise CLIError(
-            "a PIN is required via SFPL_PIN or an interactive prompt")
+        raise CLIError("a PIN is required via SFPL_PIN or an interactive prompt")
     return barcode, pin
 
 
@@ -224,13 +209,11 @@ def _text_item(item):
         if item.author:
             line += " — " + item.author
         if item.status:
-            line += " ({})".format(item.status)
+            line += f" ({item.status})"
         return line
     if isinstance(item, List):
-        return "{} — {} ({} items)".format(
-            item.title, str(item.user), item.itemcount
-        )
-    raise TypeError("unsupported result type: {}".format(type(item).__name__))
+        return f"{item.title} — {item.user!s} ({item.itemcount} items)"
+    raise TypeError(f"unsupported result type: {type(item).__name__}")
 
 
 def _render(value, stream):
@@ -243,10 +226,10 @@ def _render(value, stream):
     hours = value["hours"]
     for day in WEEKDAYS:
         if day in hours:
-            stream.write("{}: {}\n".format(day, hours[day]))
+            stream.write(f"{day}: {hours[day]}\n")
     for day, slots in hours.items():
         if day not in WEEKDAYS:
-            stream.write("{}: {}\n".format(day, slots))
+            stream.write(f"{day}: {slots}\n")
 
 
 EXPECTED_ERRORS = (
@@ -276,16 +259,13 @@ def main(argv=None, stdout=None, stderr=None, environ=None, input_stream=None):
         result = args.handler(args, environ, input_stream)
         _render(result, stdout)
     except CLIError as exc:
-        stderr.write("sfpl: error: {}\n".format(exc))
+        stderr.write(f"sfpl: error: {exc}\n")
         return 2
     except EXPECTED_ERRORS as exc:
-        stderr.write("sfpl: error: {}\n".format(_error_message(exc)))
+        stderr.write(f"sfpl: error: {_error_message(exc)}\n")
         return 1
     except requests.RequestException as exc:
-        stderr.write("sfpl: error: network request failed: {}\n".format(exc))
-        return 1
-    except RuntimeError as exc:
-        stderr.write("sfpl: error: operation failed: {}\n".format(exc))
+        stderr.write(f"sfpl: error: network request failed: {exc}\n")
         return 1
     except BrokenPipeError:
         return 0

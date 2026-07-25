@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module is an unofficial Python API for the San Francisco Public Library's Website that uses requests and BeautifulSoup, with lxml as the HTML parser.
 
@@ -8,6 +6,6 @@ With this module, you can check your holds and checked out books, as well as req
 Additionally, you can get the operating times of different SFPL library branches.
 """
 
-from .sfpl import Account, Search, User, Branch, AdvancedSearch
+from .sfpl import Account, AdvancedSearch, Branch, Search, User
 
-__all__ = ["Account", "Search", "User", "Branch", "AdvancedSearch"]
+__all__ = ["Account", "AdvancedSearch", "Branch", "Search", "User"]

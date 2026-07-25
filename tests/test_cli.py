@@ -46,9 +46,7 @@ class CLITest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("commands:", result.stdout)
         self.assertNotIn("positional arguments:", result.stdout)
-        self.assertNotIn(
-            "{search,advanced-search,branch-hours,account}", result.stdout
-        )
+        self.assertNotIn("{search,advanced-search,branch-hours,account}", result.stdout)
         for command in ("search", "advanced-search", "branch-hours", "account"):
             self.assertIn(command, result.stdout)
 
@@ -93,7 +91,7 @@ class CLITest(unittest.TestCase):
     @mock.patch("sfpl.cli.Search")
     def test_search_with_no_results_succeeds(self, search_class):
         def no_results():
-            raise StopIteration
+            return
             yield
 
         search_class.return_value.getResults.return_value = no_results()
@@ -108,13 +106,10 @@ class CLITest(unittest.TestCase):
     def test_search_keeps_results_when_pagination_ends(self, search_class):
         def one_page():
             yield [book("First")]
-            raise StopIteration
 
         search_class.return_value.getResults.return_value = one_page()
 
-        status, stdout, stderr = self.invoke(
-            ["search", "python", "--pages", "2"]
-        )
+        status, stdout, stderr = self.invoke(["search", "python", "--pages", "2"])
 
         self.assertEqual(status, 0)
         self.assertEqual(stdout, "First — Author\n")
@@ -135,9 +130,7 @@ class CLITest(unittest.TestCase):
         )
         search_class.return_value.getResults.return_value = iter([[result]])
 
-        status, stdout, _ = self.invoke(
-            ["search", "san francisco", "--type", "list"]
-        )
+        status, stdout, _ = self.invoke(["search", "san francisco", "--type", "list"])
 
         self.assertEqual(status, 0)
         self.assertEqual(stdout, "San Francisco — reader (3 items)\n")

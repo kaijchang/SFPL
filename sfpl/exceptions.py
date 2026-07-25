@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Custom exception classes raised by the sfpl module."""
 
 
@@ -7,14 +5,14 @@ class NotOnHold(Exception):
     """Raised when a user tries to cancel a hold on a book they aren't holding."""
 
     def __init__(self, book):
-        Exception.__init__(self, "{} is not on hold.".format(book))
+        Exception.__init__(self, f"{book} is not on hold.")
 
 
 class NotCheckedOut(Exception):
     """Raised when a user tries to renew a book they haven't checked out."""
 
     def __init__(self, book):
-        Exception.__init__(self, "{} is not checked out.".format(book))
+        Exception.__init__(self, f"{book} is not checked out.")
 
 
 class InvalidSearchType(Exception):
@@ -23,9 +21,7 @@ class InvalidSearchType(Exception):
     def __init__(self, _type):
         Exception.__init__(
             self,
-            "{} is not a valid search type. Valid search types are 'keyword', 'title', 'author', 'subject', 'tag' and 'list'.".format(
-                _type
-            ),
+            f"{_type} is not a valid search type. Valid search types are 'keyword', 'title', 'author', 'subject', 'tag' and 'list'.",
         )
 
 
@@ -33,14 +29,14 @@ class NoBranchFound(Exception):
     """Raised when no matches are found for a user's branch search."""
 
     def __init__(self, branch):
-        Exception.__init__(self, "No matches found for {}.".format(branch))
+        Exception.__init__(self, f"No matches found for {branch}.")
 
 
 class NoUserFound(Exception):
     """Raised when no matches are found for a user's user search."""
 
     def __init__(self, user):
-        Exception.__init__(self, "No match found for {}".format(user))
+        Exception.__init__(self, f"No match found for {user}")
 
 
 class LoginError(Exception):
@@ -77,10 +73,6 @@ class MissingFilterTerm(Exception):
 class MissingScriptError(Exception):
     """Raised when the data script is missing from the page."""
 
-    pass
-
 
 class NotLoggedIn(Exception):
     """Raised when an authentication token is rejected."""
-
-    pass

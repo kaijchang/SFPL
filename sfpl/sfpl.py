@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
+import json
+import math
+import re
+from collections.abc import Generator
+from typing import ClassVar
 
 import requests
-
-import re
-import math
-import json
-from typing import Generator
-
 from bs4 import BeautifulSoup
+
 from . import exceptions
 
 # Regex Patterns
@@ -47,9 +45,7 @@ class User:
             self.name = name
 
             resp = requests.get(
-                "https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={}".format(
-                    self.name
-                )
+                f"https://sfpl.bibliocommons.com/search?t=user&search_category=user&q={self.name}"
             )
 
             match = re.match(id_regex, resp.url)
@@ -75,9 +71,7 @@ class User:
             )
             for user in BeautifulSoup(
                 requests.get(
-                    "https://sfpl.bibliocommons.com/user_profile/{}/following".format(
-                        self._id
-                    )
+                    f"https://sfpl.bibliocommons.com/user_profile/{self._id}/following"
                 ).text,
                 "lxml",
             )(class_="col-xs-12 col-md-4")
@@ -95,9 +89,7 @@ class User:
             )
             for user in BeautifulSoup(
                 requests.get(
-                    "https://sfpl.bibliocommons.com/user_profile/{}/followers".format(
-                        self._id
-                    )
+                    f"https://sfpl.bibliocommons.com/user_profile/{self._id}/followers"
                 ).text,
                 "lxml",
             )(class_="col-xs-12 col-md-4")
@@ -123,7 +115,7 @@ class User:
             )
             for _list in BeautifulSoup(
                 requests.get(
-                    "https://sfpl.bibliocommons.com/lists/show/{}".format(self._id)
+                    f"https://sfpl.bibliocommons.com/lists/show/{self._id}"
                 ).text,
                 "lxml",
             ).find("tbody")("tr")
@@ -231,13 +223,11 @@ class Account(User):
             NotLoggedIn: If the server doesn't accept the token.
         """
         resp = self.session.post(
-            "https://sfpl.bibliocommons.com/holds/place_single_click_hold/{}".format(
-                book._id
-            ),
+            f"https://sfpl.bibliocommons.com/holds/place_single_click_hold/{book._id}",
             data={
                 "authenticity_token": BeautifulSoup(
                     self.session.get(
-                        "https://sfpl.bibliocommons.com/item/show/{}".format(book._id)
+                        f"https://sfpl.bibliocommons.com/item/show/{book._id}"
                     ).text,
                     "lxml",
                 ).find("input", {"name": "authenticity_token"})["value"],
@@ -277,8 +267,10 @@ class Account(User):
 
         for hold in holds(
             "div",
-            lambda class_: class_
-            and class_.startswith("listItem col-sm-offset-1 col-sm-10 col-xs-12"),
+            lambda class_: (
+                class_
+                and class_.startswith("listItem col-sm-offset-1 col-sm-10 col-xs-12")
+            ),
         ):
             if hold.find(testid="bib_link").text == book.title:
                 resp = self.session.post(
@@ -379,16 +371,12 @@ class Account(User):
             NotLoggedIn: If the server doesn't accept the token.
         """
         resp = self.session.put(
-            "https://sfpl.bibliocommons.com/user_profile/{}?type=follow&value={}".format(
-                self._id, user._id
-            ),
+            f"https://sfpl.bibliocommons.com/user_profile/{self._id}?type=follow&value={user._id}",
             headers={
                 "X-Requested-With": "XMLHttpRequest",
                 "X-CSRF-Token": BeautifulSoup(
                     self.session.get(
-                        "https://sfpl.bibliocommons.com/user_profile/{}".format(
-                            user._id
-                        )
+                        f"https://sfpl.bibliocommons.com/user_profile/{user._id}"
                     ).text,
                     "lxml",
                 ).find("meta", {"name": "csrf-token"})["content"],
@@ -408,16 +396,12 @@ class Account(User):
             NotLoggedIn: If the server doesn't accept the token.
         """
         resp = self.session.put(
-            "https://sfpl.bibliocommons.com/user_profile/{}?type=unfollow&value={}".format(
-                self._id, user._id
-            ),
+            f"https://sfpl.bibliocommons.com/user_profile/{self._id}?type=unfollow&value={user._id}",
             headers={
                 "X-Requested-With": "XMLHttpRequest",
                 "X-CSRF-Token": BeautifulSoup(
                     self.session.get(
-                        "https://sfpl.bibliocommons.com/user_profile/{}".format(
-                            user._id
-                        )
+                        f"https://sfpl.bibliocommons.com/user_profile/{user._id}"
                     ).text,
                     "lxml",
                 ).find("meta", {"name": "csrf-token"})["content"],
@@ -531,13 +515,15 @@ class Book:
         Returns:
             dict: Book details.
         """
-        return list(
-            _extract_data(
-                requests.get(
-                    "https://sfpl.bibliocommons.com/item/show/{}".format(self._id)
-                ).text,
-            )["entities"]["catalogBibs"].values()
-        )[0]
+        return next(
+            iter(
+                _extract_data(
+                    requests.get(
+                        f"https://sfpl.bibliocommons.com/item/show/{self._id}"
+                    ).text,
+                )["entities"]["catalogBibs"].values()
+            )
+        )
 
     @staticmethod
     def metaDataIdToId(metaDataId):
@@ -569,10 +555,10 @@ class Book:
         return bibId + paddedSourceLibId
 
     def __str__(self):
-        return "{} by {}".format(self.title, self.author) if self.author else self.title
+        return f"{self.title} by {self.author}" if self.author else self.title
 
     def __repr__(self):
-        return "{} by {}".format(self.title, self.author) if self.author else self.title
+        return f"{self.title} by {self.author}" if self.author else self.title
 
     def __eq__(self, other):
         return self._id == other._id
@@ -623,14 +609,14 @@ class Search:
                 pages_element = soup.find(string=re.compile(book_page_regex))
 
                 if not pages_element:
-                    raise StopIteration
+                    return
 
                 pages = (
                     re.match(book_page_regex, pages_element).group(1).replace(",", "")
                 )
 
                 if math.ceil(int(pages) / 10) < x:
-                    raise StopIteration
+                    return
 
                 bib_data = json.loads(soup.find(type="application/json").text)[
                     "entities"
@@ -655,9 +641,7 @@ class Search:
         elif self._type == "list":
             for x in range(1, pages + 1):
                 resp = requests.get(
-                    "https://sfpl.bibliocommons.com/search?page={}&q={}&search_category=userlist&t=userlist".format(
-                        x, self.term
-                    )
+                    f"https://sfpl.bibliocommons.com/search?page={x}&q={self.term}&search_category=userlist&t=userlist"
                 )
 
                 soup = BeautifulSoup(resp.text, "lxml")
@@ -678,7 +662,7 @@ class Search:
                     )
                     < x
                 ):
-                    raise StopIteration
+                    return
 
                 yield [
                     List(
@@ -713,10 +697,10 @@ class Search:
                 ]
 
     def __str__(self):
-        return "Search Type: {} Search Term {}".format(self._type, self.term)
+        return f"Search Type: {self._type} Search Term {self.term}"
 
     def __repr__(self):
-        return "Search Type: {} Search Term {}".format(self._type, self.term)
+        return f"Search Type: {self._type} Search Term {self.term}"
 
     def __eq__(self, other):
         return self._type == other._type and self.term == other.term
@@ -759,7 +743,7 @@ class AdvancedSearch:
 
         for term in kwargs:
             if not any(
-                term.lower() in "{}{}".format(t, s)
+                term.lower() in f"{t}{s}"
                 for t in ["include", "exclude"]
                 for s in term_map
             ):
@@ -805,21 +789,19 @@ class AdvancedSearch:
         """
         for x in range(1, pages + 1):
             resp = requests.get(
-                "https://sfpl.bibliocommons.com/v2/search?page={}&query={}&searchType=bl".format(
-                    x, self.query
-                )
+                f"https://sfpl.bibliocommons.com/v2/search?page={x}&query={self.query}&searchType=bl"
             )
 
             soup = BeautifulSoup(resp.text, "lxml")
             pages_element = soup.find(string=re.compile(book_page_regex))
 
             if not pages_element:
-                raise StopIteration
+                return
 
             pages = re.match(book_page_regex, pages_element).group(1).replace(",", "")
 
             if math.ceil(int(pages) / 10) < x:
-                raise StopIteration
+                return
 
             bib_data = json.loads(soup.find(type="application/json").text)["entities"][
                 "bibs"
@@ -892,9 +874,7 @@ class List:
             )
             for book in BeautifulSoup(
                 requests.get(
-                    "https://sfpl.bibliocommons.com/list/share/{}_{}/{}".format(
-                        self.user._id, self.user.name, self._id
-                    )
+                    f"https://sfpl.bibliocommons.com/list/share/{self.user._id}_{self.user.name}/{self._id}"
                 ).text,
                 "lxml",
             )(class_="listItem bg_white col-xs-12")
@@ -921,7 +901,7 @@ class Branch:
         _id (str): SFPL's ID for the library branch.
     """
 
-    BRANCHES = {
+    BRANCHES: ClassVar[dict[str, str]] = {
         "anza": "44563120",
         "bayview": "44563121",
         "bernal heights": "44563122",

@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
-
-import unittest
-import os
 import codecs
+import os
+import unittest
 
 import sfpl
 
@@ -68,7 +65,7 @@ class TestScraper(unittest.TestCase):
     def test_book_search_with_zero_results(self):
         "test book search with zero results"
         search = sfpl.Search("qwteyut_does_not_exist")
-        self.assertRaises(RuntimeError, lambda: next(search.getResults()))
+        self.assertEqual(list(search.getResults()), [])
 
     def test_book_search_with_one_result(self):
         "test book search with one result"
@@ -132,7 +129,7 @@ class TestScraper(unittest.TestCase):
     def test_advanced_search_with_zero_results(self):
         "test advanced search with zero results"
         search = sfpl.AdvancedSearch(includeauthor="asdafa_does_not_exist")
-        self.assertRaises(RuntimeError, lambda: next(search.getResults()))
+        self.assertEqual(list(search.getResults()), [])
 
     def test_advanced_search_error(self):
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
