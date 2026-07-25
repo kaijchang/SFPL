@@ -6,7 +6,7 @@ import os
 setup(
     name="sfpl",
     packages=["sfpl"],
-    version="1.5.7",
+    version="1.6.0",
     description="Unofficial Python API for SFPL",
     author="Kai Chang",
     author_email="kaijchang@gmail.com",
