@@ -152,7 +152,8 @@ $ sfpl search "San Francisco" --type list
 ```
 
 Advanced search accepts repeatable `--include FIELD=TERM` and
-`--exclude FIELD=TERM` filters. Included filters match all terms by default;
+`--exclude FIELD=TERM` filters. At least one `--include` filter is required.
+Included filters match all terms by default;
 use `--match any` to match any included term. The same field cannot be repeated
 within `--include` or `--exclude`.
 

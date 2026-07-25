@@ -185,6 +185,13 @@ class CLITest(unittest.TestCase):
         self.assertEqual(status, 2)
         self.assertIn("duplicate include filter for field 'author'", stderr)
 
+    def test_advanced_search_rejects_exclude_only(self):
+        status, _, stderr = self.invoke(
+            ["advanced-search", "--exclude", "title=Harry Potter"]
+        )
+        self.assertEqual(status, 2)
+        self.assertIn("requires at least one --include", stderr)
+
     def test_advanced_search_rejects_invalid_filter(self):
         status, _, stderr = self.invoke(
             ["advanced-search", "--include", "unknown=value"]

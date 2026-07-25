@@ -177,9 +177,11 @@ def _parse_filters(values, operation):
 def _run_advanced_search(args, environ, input_stream):
     del environ, input_stream
     filters = _parse_filters(args.include, "include")
-    filters.update(_parse_filters(args.exclude, "exclude"))
+    # AdvancedSearch builds its query from the included terms, so a search
+    # with only excluded terms produces a malformed, empty query.
     if not filters:
-        raise CLIError("advanced-search requires --include or --exclude")
+        raise CLIError("advanced-search requires at least one --include")
+    filters.update(_parse_filters(args.exclude, "exclude"))
     search = AdvancedSearch(exclusive=args.match == "all", **filters)
     return _collect_results(search.getResults(pages=args.pages))
 
@@ -196,6 +198,8 @@ def _account_credentials(args, environ, input_stream):
         raise CLIError("a barcode is required via --barcode or SFPL_BARCODE")
 
     pin = environ.get("SFPL_PIN")
+    # getpass reads from the controlling tty, not input_stream; the isatty
+    # check is a proxy to avoid prompting in non-interactive use.
     if not pin and input_stream.isatty():
         pin = getpass.getpass("SFPL PIN: ", stream=sys.stderr)
     if not pin:
