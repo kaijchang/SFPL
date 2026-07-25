@@ -23,4 +23,5 @@ setup(
         .read()
         .split("\n")[:-1]
     ],
+    entry_points={"console_scripts": ["sfpl=sfpl.cli:main"]},
 )

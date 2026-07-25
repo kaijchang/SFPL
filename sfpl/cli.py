@@ -1,0 +1,292 @@
+# -*- coding: utf-8 -*-
+
+"""Command-line interface for the :mod:`sfpl` package."""
+
+
+import argparse
+import getpass
+import os
+import sys
+
+import requests
+
+from . import exceptions
+from .sfpl import Account, AdvancedSearch, Book, Branch, List, Search
+
+
+ADVANCED_FIELDS = (
+    "keyword",
+    "author",
+    "title",
+    "subject",
+    "series",
+    "award",
+    "identifier",
+    "region",
+    "genre",
+    "publisher",
+    "callnumber",
+)
+SEARCH_TYPES = ("keyword", "title", "author", "subject", "tag", "list")
+WEEKDAYS = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+
+class CLIError(Exception):
+    """An expected command-line usage or operation error."""
+
+
+def _positive_int(value):
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return number
+
+
+def _add_account_options(parser):
+    parser.add_argument(
+        "--barcode",
+        help="library card barcode (default: SFPL_BARCODE)",
+    )
+
+
+def build_parser():
+    """Build and return the top-level argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="sfpl",
+        description="Search and inspect San Francisco Public Library data.",
+    )
+    commands = parser.add_subparsers(
+        dest="command", required=True, title="commands", metavar="COMMAND"
+    )
+
+    search = commands.add_parser("search", help="search books or user lists")
+    search.add_argument("query", help="search query")
+    search.add_argument(
+        "--type",
+        choices=SEARCH_TYPES,
+        default="keyword",
+        dest="search_type",
+        metavar="TYPE",
+        help="search field: {} (default: keyword)".format(
+            ", ".join(SEARCH_TYPES)
+        ),
+    )
+    search.add_argument(
+        "--pages",
+        type=_positive_int,
+        default=1,
+        help="number of result pages to request (default: 1)",
+    )
+    search.set_defaults(handler=_run_search)
+
+    advanced = commands.add_parser(
+        "advanced-search", help="search with include/exclude filters"
+    )
+    advanced.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        metavar="FIELD=TERM",
+        help="include a field value; may be repeated",
+    )
+    advanced.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="FIELD=TERM",
+        help="exclude a field value; may be repeated",
+    )
+    advanced.add_argument(
+        "--match",
+        choices=("all", "any"),
+        default="all",
+        metavar="MODE",
+        help="combine included filters: all or any (default: all)",
+    )
+    advanced.add_argument(
+        "--pages",
+        type=_positive_int,
+        default=1,
+        help="number of result pages to request (default: 1)",
+    )
+    advanced.set_defaults(handler=_run_advanced_search)
+
+    hours = commands.add_parser("branch-hours", help="show a branch's hours")
+    hours.add_argument("branch", nargs="+", help="branch name")
+    hours.set_defaults(handler=_run_branch_hours)
+
+    account = commands.add_parser(
+        "account", help="show read-only account circulation data"
+    )
+    account_commands = account.add_subparsers(
+        dest="account_command",
+        required=True,
+        title="commands",
+        metavar="COMMAND",
+    )
+    holds = account_commands.add_parser("holds", help="show current holds")
+    _add_account_options(holds)
+    holds.set_defaults(handler=_run_account)
+    checkouts = account_commands.add_parser(
+        "checkouts", help="show current checkouts")
+    _add_account_options(checkouts)
+    checkouts.set_defaults(handler=_run_account)
+
+    return parser
+
+
+def _collect_results(result_pages):
+    results = []
+    try:
+        for page in result_pages:
+            results.extend(page)
+    except RuntimeError as exc:
+        if isinstance(exc.__cause__, StopIteration):
+            return results
+        raise
+    return results
+
+
+def _run_search(args, environ, input_stream):
+    del environ, input_stream
+    search = Search(args.query, _type=args.search_type)
+    return _collect_results(search.getResults(pages=args.pages))
+
+
+def _parse_filters(values, operation):
+    filters = {}
+    for value in values:
+        field, separator, term = value.partition("=")
+        field = field.strip().lower()
+        term = term.strip()
+        if not separator or field not in ADVANCED_FIELDS or not term:
+            valid = ", ".join(ADVANCED_FIELDS)
+            raise CLIError(
+                "invalid {} filter {!r}; expected FIELD=TERM where "
+                "FIELD is one of {}".format(operation, value, valid)
+            )
+        key = "{}{}".format(operation, field)
+        if key in filters:
+            raise CLIError(
+                "duplicate {} filter for field {!r}".format(operation, field)
+            )
+        filters[key] = term
+    return filters
+
+
+def _run_advanced_search(args, environ, input_stream):
+    del environ, input_stream
+    filters = _parse_filters(args.include, "include")
+    filters.update(_parse_filters(args.exclude, "exclude"))
+    if not filters:
+        raise CLIError("advanced-search requires --include or --exclude")
+    search = AdvancedSearch(exclusive=args.match == "all", **filters)
+    return _collect_results(search.getResults(pages=args.pages))
+
+
+def _run_branch_hours(args, environ, input_stream):
+    del environ, input_stream
+    branch = Branch(" ".join(args.branch))
+    return {"branch": branch.name, "hours": branch.getHours()}
+
+
+def _account_credentials(args, environ, input_stream):
+    barcode = args.barcode or environ.get("SFPL_BARCODE")
+    if not barcode:
+        raise CLIError("a barcode is required via --barcode or SFPL_BARCODE")
+
+    pin = environ.get("SFPL_PIN")
+    if not pin and input_stream.isatty():
+        pin = getpass.getpass("SFPL PIN: ", stream=sys.stderr)
+    if not pin:
+        raise CLIError(
+            "a PIN is required via SFPL_PIN or an interactive prompt")
+    return barcode, pin
+
+
+def _run_account(args, environ, input_stream):
+    barcode, pin = _account_credentials(args, environ, input_stream)
+    account = Account(barcode, pin)
+    if args.account_command == "holds":
+        return account.getHolds()
+    return account.getCheckouts()
+
+
+def _text_item(item):
+    if isinstance(item, Book):
+        line = item.title
+        if item.subtitle:
+            line += ": " + item.subtitle
+        if item.author:
+            line += " — " + item.author
+        if item.status:
+            line += " ({})".format(item.status)
+        return line
+    if isinstance(item, List):
+        return "{} — {} ({} items)".format(
+            item.title, str(item.user), item.itemcount
+        )
+    raise TypeError("unsupported result type: {}".format(type(item).__name__))
+
+
+def _render(value, stream):
+    if isinstance(value, list):
+        for item in value:
+            stream.write(_text_item(item) + "\n")
+        return
+
+    stream.write(value["branch"] + "\n")
+    hours = value["hours"]
+    for day in WEEKDAYS:
+        if day in hours:
+            stream.write("{}: {}\n".format(day, hours[day]))
+    for day, slots in hours.items():
+        if day not in WEEKDAYS:
+            stream.write("{}: {}\n".format(day, slots))
+
+
+EXPECTED_ERRORS = (
+    exceptions.HoldError,
+    exceptions.InvalidSearchType,
+    exceptions.LoginError,
+    exceptions.MissingFilterTerm,
+    exceptions.MissingScriptError,
+    exceptions.NoBranchFound,
+    exceptions.NotLoggedIn,
+)
+
+
+def _error_message(exc):
+    return str(exc) or exc.__class__.__name__
+
+
+def main(argv=None, stdout=None, stderr=None, environ=None, input_stream=None):
+    """Run the CLI and return its process exit status."""
+    stdout = stdout or sys.stdout
+    stderr = stderr or sys.stderr
+    environ = os.environ if environ is None else environ
+    input_stream = input_stream or sys.stdin
+    args = build_parser().parse_args(argv)
+
+    try:
+        result = args.handler(args, environ, input_stream)
+        _render(result, stdout)
+    except CLIError as exc:
+        stderr.write("sfpl: error: {}\n".format(exc))
+        return 2
+    except EXPECTED_ERRORS as exc:
+        stderr.write("sfpl: error: {}\n".format(_error_message(exc)))
+        return 1
+    except requests.RequestException as exc:
+        stderr.write("sfpl: error: network request failed: {}\n".format(exc))
+        return 1
+    except RuntimeError as exc:
+        stderr.write("sfpl: error: operation failed: {}\n".format(exc))
+        return 1
+    except BrokenPipeError:
+        return 0
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

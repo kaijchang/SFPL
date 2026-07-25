@@ -125,3 +125,70 @@ Getting hours for a library branch:
 >>> branch.getHours()
 {'Sun': '1 - 5', 'Mon': '12 - 6', 'Tue': '10 - 9', 'Wed': '1 - 9', 'Thu': '10 - 6', 'Fri': '1 - 6', 'Sat': '10 - 6'}
 ```
+
+## Command-Line Interface
+
+Installing the package provides an `sfpl` command. You can also run it directly
+with `pipx run sfpl` or `uvx sfpl`. The same interface is available through
+`python -m sfpl`:
+
+```console
+$ sfpl --help
+```
+
+### Search
+
+Search books by keyword, title, author, subject, or tag:
+
+```console
+$ sfpl search "J.K. Rowling" --type author --pages 2
+$ sfpl search "climate fiction" --type subject
+```
+
+Use `--type list` to search user-created lists:
+
+```console
+$ sfpl search "San Francisco" --type list
+```
+
+Advanced search accepts repeatable `--include FIELD=TERM` and
+`--exclude FIELD=TERM` filters. Included filters match all terms by default;
+use `--match any` to match any included term. The same field cannot be repeated
+within `--include` or `--exclude`.
+
+```console
+$ sfpl advanced-search \
+    --include "author=J. K. Rowling" \
+    --include "keyword=magic" \
+    --exclude "title=Harry Potter" \
+    --match all \
+    --pages 2
+```
+
+Valid advanced-search fields are `keyword`, `author`, `title`, `subject`,
+`series`, `award`, `identifier`, `region`, `genre`, `publisher`, and
+`callnumber`.
+
+### Branch Hours
+
+```console
+$ sfpl branch-hours west portal
+$ sfpl branch-hours "main library"
+```
+
+### Account Holds and Checkouts
+
+```console
+$ sfpl account holds --barcode "your library card barcode"
+$ sfpl account checkouts --barcode "your library card barcode"
+```
+
+The command prompts for your PIN without displaying it.
+
+Alternatively, provide both credentials through environment variables:
+
+```console
+$ export SFPL_BARCODE="your library card barcode"
+$ export SFPL_PIN="your library account PIN"
+$ sfpl account holds
+```
