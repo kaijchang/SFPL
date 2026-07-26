@@ -280,26 +280,26 @@ def _format_details(details):
     lines = []
     title = brief.get("title")
     if title:
-        lines.append("Title: {}".format(title))
+        lines.append(f"Title: {title}")
     subtitle = brief.get("subTitle")
     if subtitle:
-        lines.append("Subtitle: {}".format(subtitle))
+        lines.append(f"Subtitle: {subtitle}")
     creators = brief.get("creators", [])
     if creators:
         authors = ", ".join(
             c.get("fullName", "") for c in creators if c.get("fullName")
         )
         if authors:
-            lines.append("Author: {}".format(authors))
+            lines.append(f"Author: {authors}")
     fmt = brief.get("format")
     if fmt:
-        lines.append("Format: {}".format(fmt))
+        lines.append(f"Format: {fmt}")
     pub_date = brief.get("publicationDate")
     if pub_date:
-        lines.append("Publication Date: {}".format(pub_date))
+        lines.append(f"Publication Date: {pub_date}")
     desc = brief.get("description")
     if desc:
-        lines.append("Description: {}".format(desc))
+        lines.append(f"Description: {desc}")
     return "\n".join(lines)
 
 
@@ -318,8 +318,16 @@ def _text_item(item):
                 formatted = _format_details(details)
                 if formatted:
                     line += "\n" + formatted
-            except Exception:
-                pass
+            except (
+                AttributeError,
+                KeyError,
+                StopIteration,
+                TypeError,
+                ValueError,
+                exceptions.MissingScriptError,
+                requests.RequestException,
+            ):
+                return line
         return line
     if isinstance(item, List):
         return f"{item.title} — {item.user!s} ({item.itemcount} items)"
