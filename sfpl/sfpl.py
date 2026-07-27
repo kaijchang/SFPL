@@ -622,21 +622,13 @@ class Search:
                     url += "&f_ON_ORDER=false"
                 resp = requests.get(url)
                 soup = BeautifulSoup(resp.text, "lxml")
-                pages_element = soup.find(string=re.compile(book_page_regex))
+                data = json.loads(soup.find(type="application/json").text)
+                cs = data.get("search", {}).get("catalogSearch", {})
 
-                if not pages_element:
+                if cs.get("zeroResults") or math.ceil(cs.get("pagination", {}).get("count", 0) / 10) < x:
                     return
 
-                pages = (
-                    re.match(book_page_regex, pages_element).group(1).replace(",", "")
-                )
-
-                if math.ceil(int(pages) / 10) < x:
-                    return
-
-                bib_data = json.loads(soup.find(type="application/json").text)[
-                    "entities"
-                ]["bibs"]
+                bib_data = data["entities"]["bibs"]
 
                 books = []
 
@@ -825,19 +817,13 @@ class AdvancedSearch:
             resp = requests.get(url)
 
             soup = BeautifulSoup(resp.text, "lxml")
-            pages_element = soup.find(string=re.compile(book_page_regex))
+            data = json.loads(soup.find(type="application/json").text)
+            cs = data.get("search", {}).get("catalogSearch", {})
 
-            if not pages_element:
+            if cs.get("zeroResults") or math.ceil(cs.get("pagination", {}).get("count", 0) / 10) < x:
                 return
 
-            pages = re.match(book_page_regex, pages_element).group(1).replace(",", "")
-
-            if math.ceil(int(pages) / 10) < x:
-                return
-
-            bib_data = json.loads(soup.find(type="application/json").text)["entities"][
-                "bibs"
-            ]
+            bib_data = data["entities"]["bibs"]
 
             books = []
 
