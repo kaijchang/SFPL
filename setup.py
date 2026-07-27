@@ -13,7 +13,7 @@ with open(os.path.join(here, "requirements.txt")) as requirements:
 setup(
     name="sfpl",
     packages=["sfpl"],
-    version="1.6.0",
+    version="1.6.1",
     description="Unofficial Python API for SFPL",
     author="Kai Chang",
     author_email="kaijchang@gmail.com",
