@@ -177,7 +177,7 @@ Valid advanced-search fields are `keyword`, `author`, `title`, `subject`,
 Pass `--details` to `sfpl search` or `sfpl advanced-search` to include full metadata (format, publication date, description, etc.) for each result item:
 
 ```console
-$ sfpl search "vegan" --sort newly_acquired --no-on-order --details
+$ sfpl search "hufflepuff" --sort newly_acquired --no-on-order --details
 ```
 
 ### Book Details
