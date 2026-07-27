@@ -138,6 +138,14 @@ class TestScraper(unittest.TestCase):
         with self.assertRaises(sfpl.exceptions.MissingFilterTerm):
             sfpl.AdvancedSearch(excludesomething="Harry Potter")
 
+    def test_search_format_and_sort(self):
+        search = sfpl.Search("music", format="LP", sort="newly_acquired")
+        self.assertEqual(search.format, "LP")
+        self.assertEqual(search.sort, "newly_acquired")
+        results = search.getResults(pages=1)
+        first_page = next(results)
+        self.assertGreater(len(first_page), 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -47,7 +47,13 @@ class CLITest(unittest.TestCase):
         self.assertIn("commands:", result.stdout)
         self.assertNotIn("positional arguments:", result.stdout)
         self.assertNotIn("{search,advanced-search,branch-hours,account}", result.stdout)
-        for command in ("search", "advanced-search", "branch-hours", "account"):
+        for command in (
+            "search",
+            "advanced-search",
+            "details",
+            "branch-hours",
+            "account",
+        ):
             self.assertIn(command, result.stdout)
 
     def test_nested_help_uses_compact_labels(self):
@@ -81,12 +87,37 @@ class CLITest(unittest.TestCase):
 
         self.assertEqual(status, 0)
         self.assertEqual(stderr, "")
-        search_class.assert_called_once_with("python", _type="title")
+        search_class.assert_called_once_with(
+            "python", _type="title", format=None, sort=None, on_order=None
+        )
         search_class.return_value.getResults.assert_called_once_with(pages=2)
         self.assertEqual(
             stdout,
             "First — Author\nSecond — Author (Due tomorrow)\n",
         )
+
+    @mock.patch("sfpl.cli.Search")
+    def test_search_with_format_and_sort(self, search_class):
+        search_class.return_value.getResults.return_value = iter([[book("Album")]])
+
+        status, stdout, stderr = self.invoke(
+            [
+                "search",
+                "music",
+                "--format",
+                "LP",
+                "--sort",
+                "newly_acquired",
+                "--on-order",
+            ]
+        )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        search_class.assert_called_once_with(
+            "music", _type="keyword", format="LP", sort="newly_acquired", on_order=True
+        )
+        self.assertEqual(stdout, "Album — Author\n")
 
     @mock.patch("sfpl.cli.Search")
     def test_search_with_no_results_succeeds(self, search_class):
@@ -159,11 +190,40 @@ class CLITest(unittest.TestCase):
         self.assertEqual(stderr, "")
         search_class.assert_called_once_with(
             exclusive=False,
+            format=None,
+            sort=None,
+            on_order=None,
             includeauthor="J. K. Rowling",
             includekeyword="magic",
             excludetitle="Harry Potter",
         )
         search_class.return_value.getResults.assert_called_once_with(pages=2)
+
+    @mock.patch("sfpl.cli.AdvancedSearch")
+    def test_advanced_search_with_format_and_sort(self, search_class):
+        search_class.return_value.getResults.return_value = iter([[book()]])
+
+        status, _, stderr = self.invoke(
+            [
+                "advanced-search",
+                "--include",
+                "author=Miles Davis",
+                "--format",
+                "LP",
+                "--sort",
+                "newly_acquired",
+            ]
+        )
+
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        search_class.assert_called_once_with(
+            exclusive=True,
+            format="LP",
+            sort="newly_acquired",
+            on_order=None,
+            includeauthor="Miles Davis",
+        )
 
     def test_advanced_search_rejects_duplicate_field(self):
         status, _, stderr = self.invoke(
@@ -242,6 +302,48 @@ class CLITest(unittest.TestCase):
         self.assertEqual(status, 2)
         self.assertIn("PIN is required", stderr)
         self.assertNotIn("card", stderr)
+
+    @mock.patch("sfpl.cli.Book")
+    def test_details_command(self, book_class):
+        book_class.return_value.getDetails.return_value = {
+            "brief": {
+                "title": "Python Programming",
+                "subTitle": "Learn Python",
+                "creators": [{"fullName": "Guido van Rossum"}],
+                "format": "BK",
+                "publicationDate": "2020",
+                "description": "A comprehensive python guide.",
+            }
+        }
+
+        status, stdout, stderr = self.invoke(["details", "12345"])
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        book_class.assert_called_once_with(
+            {"_id": "12345", "title": "", "subtitle": "", "author": ""}
+        )
+        self.assertIn("Title: Python Programming", stdout)
+        self.assertIn("Author: Guido van Rossum", stdout)
+        self.assertIn("Description: A comprehensive python guide.", stdout)
+
+    @mock.patch("sfpl.cli.Search")
+    def test_search_with_details_flag(self, search_class):
+        b = book("Python")
+        b.getDetails = mock.MagicMock(
+            return_value={
+                "brief": {
+                    "title": "Python",
+                    "description": "Python book description",
+                }
+            }
+        )
+        search_class.return_value.getResults.return_value = iter([[b]])
+
+        status, stdout, stderr = self.invoke(["search", "python", "--details"])
+        self.assertEqual(status, 0)
+        self.assertEqual(stderr, "")
+        self.assertIn("Python — Author", stdout)
+        self.assertIn("Description: Python book description", stdout)
 
     @mock.patch("sfpl.cli.Branch", side_effect=exceptions.NoBranchFound("missing"))
     def test_domain_errors_are_concise(self, _branch_class):

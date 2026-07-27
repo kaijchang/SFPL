@@ -66,6 +66,27 @@ def build_parser():
         help="search field: {} (default: keyword)".format(", ".join(SEARCH_TYPES)),
     )
     search.add_argument(
+        "--format",
+        metavar="FORMAT",
+        help="filter by media format (e.g. LP, BK, DVD)",
+    )
+    search.add_argument(
+        "--sort",
+        metavar="SORT",
+        help="sort results (e.g. newly_acquired, relevance)",
+    )
+    search.add_argument(
+        "--on-order",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="filter by on-order status (--on-order or --no-on-order)",
+    )
+    search.add_argument(
+        "--details",
+        action="store_true",
+        help="include detailed book metadata",
+    )
+    search.add_argument(
         "--pages",
         type=_positive_int,
         default=1,
@@ -98,12 +119,37 @@ def build_parser():
         help="combine included filters: all or any (default: all)",
     )
     advanced.add_argument(
+        "--format",
+        metavar="FORMAT",
+        help="filter by media format (e.g. LP, BK, DVD)",
+    )
+    advanced.add_argument(
+        "--sort",
+        metavar="SORT",
+        help="sort results (e.g. newly_acquired, relevance)",
+    )
+    advanced.add_argument(
+        "--on-order",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="filter by on-order status (--on-order or --no-on-order)",
+    )
+    advanced.add_argument(
+        "--details",
+        action="store_true",
+        help="include detailed book metadata",
+    )
+    advanced.add_argument(
         "--pages",
         type=_positive_int,
         default=1,
         help="number of result pages to request (default: 1)",
     )
     advanced.set_defaults(handler=_run_advanced_search)
+
+    details = commands.add_parser("details", help="get details for a book by ID")
+    details.add_argument("id", help="book catalog ID")
+    details.set_defaults(handler=_run_details)
 
     hours = commands.add_parser("branch-hours", help="show a branch's hours")
     hours.add_argument("branch", nargs="+", help="branch name")
@@ -137,8 +183,19 @@ def _collect_results(result_pages):
 
 def _run_search(args, environ, input_stream):
     del environ, input_stream
-    search = Search(args.query, _type=args.search_type)
-    return _collect_results(search.getResults(pages=args.pages))
+    search = Search(
+        args.query,
+        _type=args.search_type,
+        format=args.format,
+        sort=args.sort,
+        on_order=args.on_order,
+    )
+    results = _collect_results(search.getResults(pages=args.pages))
+    if getattr(args, "details", False):
+        for item in results:
+            if isinstance(item, Book):
+                item._include_details = True
+    return results
 
 
 def _parse_filters(values, operation):
@@ -168,8 +225,25 @@ def _run_advanced_search(args, environ, input_stream):
     if not filters:
         raise CLIError("advanced-search requires at least one --include")
     filters.update(_parse_filters(args.exclude, "exclude"))
-    search = AdvancedSearch(exclusive=args.match == "all", **filters)
-    return _collect_results(search.getResults(pages=args.pages))
+    search = AdvancedSearch(
+        exclusive=args.match == "all",
+        format=args.format,
+        sort=args.sort,
+        on_order=args.on_order,
+        **filters,
+    )
+    results = _collect_results(search.getResults(pages=args.pages))
+    if getattr(args, "details", False):
+        for item in results:
+            if isinstance(item, Book):
+                item._include_details = True
+    return results
+
+
+def _run_details(args, environ, input_stream):
+    del environ, input_stream
+    book = Book({"_id": args.id, "title": "", "subtitle": "", "author": ""})
+    return {"type": "details", "details": book.getDetails()}
 
 
 def _run_branch_hours(args, environ, input_stream):
@@ -201,6 +275,34 @@ def _run_account(args, environ, input_stream):
     return account.getCheckouts()
 
 
+def _format_details(details):
+    brief = details.get("brief", {})
+    lines = []
+    title = brief.get("title")
+    if title:
+        lines.append(f"Title: {title}")
+    subtitle = brief.get("subTitle")
+    if subtitle:
+        lines.append(f"Subtitle: {subtitle}")
+    creators = brief.get("creators", [])
+    if creators:
+        authors = ", ".join(
+            c.get("fullName", "") for c in creators if c.get("fullName")
+        )
+        if authors:
+            lines.append(f"Author: {authors}")
+    fmt = brief.get("format")
+    if fmt:
+        lines.append(f"Format: {fmt}")
+    pub_date = brief.get("publicationDate")
+    if pub_date:
+        lines.append(f"Publication Date: {pub_date}")
+    desc = brief.get("description")
+    if desc:
+        lines.append(f"Description: {desc}")
+    return "\n".join(lines)
+
+
 def _text_item(item):
     if isinstance(item, Book):
         line = item.title
@@ -210,6 +312,22 @@ def _text_item(item):
             line += " — " + item.author
         if item.status:
             line += f" ({item.status})"
+        if getattr(item, "_include_details", False):
+            try:
+                details = item.getDetails()
+                formatted = _format_details(details)
+                if formatted:
+                    line += "\n" + formatted
+            except (
+                AttributeError,
+                KeyError,
+                StopIteration,
+                TypeError,
+                ValueError,
+                exceptions.MissingScriptError,
+                requests.RequestException,
+            ):
+                return line
         return line
     if isinstance(item, List):
         return f"{item.title} — {item.user!s} ({item.itemcount} items)"
@@ -217,6 +335,12 @@ def _text_item(item):
 
 
 def _render(value, stream):
+    if isinstance(value, dict) and value.get("type") == "details":
+        formatted = _format_details(value["details"])
+        if formatted:
+            stream.write(formatted + "\n")
+        return
+
     if isinstance(value, list):
         for item in value:
             stream.write(_text_item(item) + "\n")

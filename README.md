@@ -138,11 +138,13 @@ $ sfpl --help
 
 ### Search
 
-Search books by keyword, title, author, subject, or tag:
+Search books or media by keyword, title, author, subject, or tag:
 
 ```console
 $ sfpl search "J.K. Rowling" --type author --pages 2
 $ sfpl search "climate fiction" --type subject
+$ sfpl search "music" --format LP --sort newly_acquired --on-order
+$ sfpl search "music" --format LP --no-on-order
 ```
 
 Use `--type list` to search user-created lists:
@@ -152,16 +154,18 @@ $ sfpl search "San Francisco" --type list
 ```
 
 Advanced search accepts repeatable `--include FIELD=TERM` and
-`--exclude FIELD=TERM` filters. At least one `--include` filter is required.
-Included filters match all terms by default;
-use `--match any` to match any included term. The same field cannot be repeated
-within `--include` or `--exclude`.
+`--exclude FIELD=TERM` filters, as well as `--format` and `--sort` options.
+At least one `--include` filter is required. Included filters match all terms
+by default; use `--match any` to match any included term. The same field cannot
+be repeated within `--include` or `--exclude`.
 
 ```console
 $ sfpl advanced-search \
     --include "author=J. K. Rowling" \
     --include "keyword=magic" \
     --exclude "title=Harry Potter" \
+    --format BK \
+    --sort relevance \
     --match all \
     --pages 2
 ```
@@ -169,6 +173,20 @@ $ sfpl advanced-search \
 Valid advanced-search fields are `keyword`, `author`, `title`, `subject`,
 `series`, `award`, `identifier`, `region`, `genre`, `publisher`, and
 `callnumber`.
+
+Pass `--details` to `sfpl search` or `sfpl advanced-search` to include full metadata (format, publication date, description, etc.) for each result item:
+
+```console
+$ sfpl search "vegan" --sort newly_acquired --no-on-order --details
+```
+
+### Book Details
+
+Look up detailed metadata for a specific item by catalog ID:
+
+```console
+$ sfpl details 4564247093
+```
 
 ### Branch Hours
 

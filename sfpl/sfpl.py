@@ -573,13 +573,18 @@ class Search:
     Attributes:
         term (str): Search term.
         _type(str): The type of search.
+        format (str): Format filter, if set.
+        sort (str): Sort mode, if set.
     """
 
-    def __init__(self, term, _type="keyword"):
+    def __init__(self, term, _type="keyword", format=None, sort=None, on_order=None):
         """
         Args:
             term (str): Search term.
             _type(str, optional): The type of search.
+            format(str, optional): Media format filter.
+            sort(str, optional): Sort order for results.
+            on_order(bool, optional): Filter by on-order status (True for on-order, False for available now).
 
         Raises:
             InvalidSearchType: If the search type is not valid.
@@ -587,6 +592,9 @@ class Search:
         if _type.lower() in ["keyword", "title", "author", "subject", "tag", "list"]:
             self.term = term
             self._type = _type.lower()
+            self.format = format
+            self.sort = sort
+            self.on_order = on_order
 
         else:
             raise exceptions.InvalidSearchType(_type.lower())
@@ -604,6 +612,14 @@ class Search:
             for x in range(1, pages + 1):
                 query = "+".join(self.term.split())
                 url = f"https://sfpl.bibliocommons.com/v2/search?page={x}&query={query}&searchType={self._type}"
+                if self.format:
+                    url += f"&f_FORMAT={self.format}"
+                if self.sort:
+                    url += f"&sort={self.sort}"
+                if self.on_order is True:
+                    url += "&f_ON_ORDER=true"
+                elif self.on_order is False:
+                    url += "&f_ON_ORDER=false"
                 resp = requests.get(url)
                 soup = BeautifulSoup(resp.text, "lxml")
                 pages_element = soup.find(string=re.compile(book_page_regex))
@@ -714,12 +730,17 @@ class AdvancedSearch:
 
     Attributes:
         query(str): The formatted query.
+        format(str): Format filter, if set.
+        sort(str): Sort mode, if set.
     """
 
-    def __init__(self, exclusive=True, **kwargs):
+    def __init__(self, exclusive=True, format=None, sort=None, on_order=None, **kwargs):
         """
         Args:
             exclusive (bool): Whether or not to include all results that match or any that match.
+            format (str, optional): Media format filter.
+            sort (str, optional): Sort order for results.
+            on_order(bool, optional): Filter by on-order status (True for on-order, False for available now).
             **kwargs: Search terms including one of 'include' or 'exclude' and one type such as 'keyword' or 'author'.
                       An example kwarg would be: includeauthor='J.K Rowling' or excludekeyword='Chamber'.
                       You can include multiple of the same type with includekeyword1='Chamber' and includekeyword2='Secrets'.
@@ -727,6 +748,10 @@ class AdvancedSearch:
         Raises:
             MissingFilterTerm: If the term is missing a required part.
         """
+        self.format = format
+        self.sort = sort
+        self.on_order = on_order
+
         term_map = {
             "keyword": "anywhere",
             "author": "contributor",
@@ -788,9 +813,16 @@ class AdvancedSearch:
             [Fantastic Beasts and Where to Find Them by Rowling, J. K., Fantastic Beasts and Where to Find Them : The Original Screenplay by Rowling, J. K., The Casual Vacancy by Rowling, J. K., Very Good Lives by Rowling, J. K., Animales fantásticos y dónde encontrarlos by Rowling, J. K.]
         """
         for x in range(1, pages + 1):
-            resp = requests.get(
-                f"https://sfpl.bibliocommons.com/v2/search?page={x}&query={self.query}&searchType=bl"
-            )
+            url = f"https://sfpl.bibliocommons.com/v2/search?page={x}&query={self.query}&searchType=bl"
+            if self.format:
+                url += f"&f_FORMAT={self.format}"
+            if self.sort:
+                url += f"&sort={self.sort}"
+            if self.on_order is True:
+                url += "&f_ON_ORDER=true"
+            elif self.on_order is False:
+                url += "&f_ON_ORDER=false"
+            resp = requests.get(url)
 
             soup = BeautifulSoup(resp.text, "lxml")
             pages_element = soup.find(string=re.compile(book_page_regex))
